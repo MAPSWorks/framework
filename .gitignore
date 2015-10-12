@@ -1,0 +1,10 @@
+build/
+data/
+.DS_Store
+*.pb.h
+*.pb.cc
+*.pbf
+*.swp
+*.pyc
+.vim-bookmarks
+*.json
