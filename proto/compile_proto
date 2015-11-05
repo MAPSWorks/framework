@@ -1,0 +1,1 @@
+protoc -I=. --cpp_out=../src/core/ gps_trajectory.proto 

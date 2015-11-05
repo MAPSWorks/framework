@@ -1,0 +1,13 @@
+message GpsTraj{           
+    repeated TrajPoint point = 1;   
+}
+
+message TrajPoint{         
+    required int32  car_id = 1;
+    required uint32 timestamp = 2;  // Has to be uint32 to prevent overfloat
+    required int32  lon = 3; // original lat * 1e6 to preserve accuracy
+    required int32  lat = 4; // original lon * 1e6 to preserve accuracy
+    required int32  head = 5; // w.r.t. the true north of earth
+    required int32  speed = 6; // in cm/s
+    optional bool   heavy = 7; // only used for Beijing Taxi data
+}

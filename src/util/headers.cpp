@@ -7,6 +7,42 @@ Created by Chen Chen on 09/28/2015
 
 #include "headers.h"
 
+void updateBBOX(float minX, float maxX,
+                float minY, float maxY,
+                float minZ, float maxZ){
+    if(BBOX::inst()->minX > minX) { 
+        BBOX::inst()->minX = minX;
+    } 
+    if(BBOX::inst()->maxX < maxX) { 
+        BBOX::inst()->maxX = maxX; 
+    } 
+
+    if(BBOX::inst()->minY > minY) { 
+        BBOX::inst()->minY = minY;
+    } 
+    if(BBOX::inst()->maxY < maxY) { 
+        BBOX::inst()->maxY = maxY; 
+    }
+
+    if(BBOX::inst()->minZ > minZ) { 
+        BBOX::inst()->minZ = minZ;
+    } 
+    if(BBOX::inst()->maxZ < maxZ) { 
+        BBOX::inst()->maxZ = maxZ; 
+    }
+}
+
+glm::vec2 BBOXNormalize(float x, float y){
+    float lx = BBOX::inst()->maxX - BBOX::inst()->minX; 
+    float ly = BBOX::inst()->maxY - BBOX::inst()->minY; 
+    float l = (lx > ly) ? lx : ly;
+
+    float newX = (x - BBOX::inst()->minX) / l * 2.0f - 1.0f;
+    float newY = (y - BBOX::inst()->minY) / l * 2.0f - 1.0f;
+
+    return glm::vec2(newX, newY);
+}
+
 float cosineInterpolation(float a, double b, double s)
 {
    float s2;
@@ -35,9 +71,7 @@ double hermiteInterpolation(double y0, double y1, double y2, double y3, double m
     return(a0*y1+a1*m0+a2*m1+a3*y2);
 }
 
-void saveFrameBuffer(QOpenGLWidget* widget){
-    QImage img = widget->grabFramebuffer();
-
+void saveImage(QImage& img){
     QDate date = QDate::currentDate(); 
     QTime time = QTime::currentTime();
 
@@ -66,11 +100,11 @@ void saveFrameBuffer(QOpenGLWidget* widget){
     QString fileName = sYear + fMonth + fDay + "_" + fHour + fMinute + fSecond + ".jpg";
 
     img.save(fileName, "jpg", 100);
+    cout << "\tframe buffer saved to" << fileName.toStdString() << endl;
 }
 
-void saveFrameBuffer(QOpenGLWidget* widget, int idx){
-    QImage img = widget->grabFramebuffer();
-
+void saveImage(QImage& img, int idx){
+    cout << "frame idx: " << idx << endl;
     QDate date = QDate::currentDate(); 
     QTime time = QTime::currentTime();
 
@@ -99,9 +133,10 @@ void saveFrameBuffer(QOpenGLWidget* widget, int idx){
     QString fSecond = second < 10 ? sNull + sSecond : sSecond;
 
     //QString fileName = "Output/" + sYear + fMonth + fDay + "_" + fHour + fMinute + fSecond + "_" + number + ".jpg";
-    QString fileName = "Output/" + number + ".jpg";
+    QString fileName = "Output/" + number + ".png";
 
-    img.save(fileName, "jpg", 100);
+    img.save(fileName, "png", 100);
+    cout << "\tframe buffer saved to " << fileName.toStdString() << endl;
 }
 
 void getCameraFrame(const Transform &trans, 

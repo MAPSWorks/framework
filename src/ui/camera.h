@@ -93,71 +93,71 @@ class Camera {
         void renderSpline();
 
     private:
-        Config m_conf;
-        float m_heading;
-        float m_pitch;
-        float m_roll;
+        Config                    m_conf;
+        float                     m_heading;
+        float                     m_pitch;
+        float                     m_roll;
 
-        float m_ncp;
-        float m_fcp;
-        float m_fov;
-        float m_aspect;
-        float m_lerpFactor;
+        float                     m_ncp;
+        float                     m_fcp;
+        float                     m_fov;
+        float                     m_aspect;
+        float                     m_lerpFactor;
 
-        bool  m_locked;
+        bool                      m_locked;
 
-        glm::mat4     m_view;
-        glm::mat4     m_projection;
+        glm::mat4                 m_view;
+        glm::mat4                 m_projection;
 
-        glm::vec3 m_pos;
-        glm::vec3 m_dir;
-        glm::vec3 m_up;
-        glm::vec3 m_right;
-        glm::vec3 m_strafe;
+        glm::vec3                 m_pos;
+        glm::vec3                 m_dir;
+        glm::vec3                 m_up;
+        glm::vec3                 m_right;
+        glm::vec3                 m_strafe;
         
-        glm::vec3 m_cameraColor;
+        glm::vec3                 m_cameraColor;
 
         // Camera speed
-        HPTimer m_hpTimer;
-        float   m_forwardSpeed;
-        float   m_strafeSpeed;
-        float   m_moveSpeed;
-        float   m_time;
-        float   m_timer;
-        float   m_timerDiff;
-        float   m_secsPerFrame;
-        float   m_desiredDistance;
-        float   m_movementValue;
+        HPTimer                   m_hpTimer;
+        float                     m_forwardSpeed;
+        float                     m_strafeSpeed;
+        float                     m_moveSpeed;
+        float                     m_time;
+        float                     m_timer;
+        float                     m_timerDiff;
+        float                     m_secsPerFrame;
+        float                     m_desiredDistance;
+        float                     m_movementValue;
 
         // Camera spline
-        Spline  *m_spline; 
-        Spline  *m_splineView;
-        Spline  *m_splineSpeed;
+        Spline                    *m_spline;
+        Spline                    *m_splineView;
+        Spline                    *m_splineSpeed;
         VertexBufferObjectAttribs *m_splineVBO;
 
         // Quaternion helper
-        glm::quat m_qHeading;
-        glm::quat m_qPitch;
-        glm::quat m_qRoll;
+        glm::quat                 m_qHeading;
+        glm::quat                 m_qPitch;
+        glm::quat                 m_qRoll;
 
         // Frames
         struct CameraFrame{
-            glm::vec3 pos;
-            float     heading; // in degrees
-            float     pitch;
-            float     desiredDistance;
+            glm::vec3             pos;
+            float                 heading;    // in degrees
+            float                 pitch;
+            float                 desiredDistance;
         };
-        vector<CameraFrame> m_camFrames;
+        vector<CameraFrame>       m_camFrames;
 
-        QFileInfoList m_frameFileNames;
-        int           m_activeFrameSet;
-        QString       m_activeFrameSetName;
-        QString       m_frameSetFolder;
+        QFileInfoList             m_frameFileNames;
+        int                       m_activeFrameSet;
+        QString                   m_activeFrameSetName;
+        QString                   m_frameSetFolder;
         VertexBufferObjectAttribs *m_frameVBO;
 
         // Visualize camera
-        bool m_renderFrustum;
-        Frustum *m_frustum;
+        bool                      m_renderFrustum;
+        Frustum                   *m_frustum;
 };
 
 #endif /* end of include guard: CAMERA_H_ */

@@ -25,7 +25,7 @@ Camera::Camera(glm::vec3 pos,
     m_up(0.0f, 1.0f, 0.0f),
     m_right(1.0f, 0.0f, 0.0f),
     m_strafe(0.0f, 0.0f, 0.0f),
-    m_cameraColor(1.0f, 1.0f, 1.0f),
+    m_cameraColor(1.0f, 1.0f, 0.0f),
     m_moveSpeed(0.01f),
     m_forwardSpeed(0.0f),
     m_strafeSpeed(0.0f),
@@ -116,11 +116,11 @@ void Camera::update(){
 
     glm::quat q = m_qPitch * m_qHeading * m_qRoll;
     m_up = glm::rotate(q, glm::vec3(0.0f, 1.0f, 0.0f));
-    m_dir = glm::rotate(q, glm::vec3(0.0f, 0.0f, -1.0f));
+    m_dir = glm::rotate(q, glm::vec3(0.0f, 0.0f, 1.0f));
 
     m_view = glm::lookAt(m_pos, m_pos + m_dir, m_up);
 
-    m_right = -glm::cross(m_dir, m_up);
+    m_right = glm::cross(m_dir, m_up);
 
     // Update camera frustum
     m_frustum->setCamDef(m_pos, m_dir, m_up);
@@ -143,7 +143,7 @@ void Camera::unlock(){
 
 void Camera::changePitch(float degrees){
     if (!m_locked) { 
-        m_pitch += degrees; 
+        m_pitch -= degrees; 
     } 
 }
 
@@ -279,7 +279,7 @@ void Camera::strafeLeft(bool move)
 {
     if (!m_locked) {
         if (move)
-            m_strafeSpeed = m_movementValue;
+            m_strafeSpeed = -m_movementValue;
         else
             m_strafeSpeed = 0.0f;
     }
@@ -289,7 +289,7 @@ void Camera::strafeRight(bool move)
 {
     if (!m_locked) {
         if (move)
-            m_strafeSpeed = -m_movementValue;
+            m_strafeSpeed = m_movementValue;
         else
             m_strafeSpeed = 0.0f;
     }
@@ -311,6 +311,8 @@ void Camera::addFrame(glm::vec3 pos, float heading, float pitch, float desiredDi
     frame.heading = heading;
     frame.pitch = pitch;
     frame.desiredDistance = desiredDistance;
+
+    m_camFrames.push_back(frame);
 }
 
 void Camera::autoAddFrame(){
@@ -356,6 +358,7 @@ void Camera::saveFrames(QString filePath){
     } 
 
     file.close();
+    cout << "Camera frames saved to " << filePath.toStdString() << endl;
 }
 
 void Camera::saveFrames(){
@@ -435,6 +438,8 @@ void Camera::loadFrameDirectory(QString folderPath){
         QFileInfo fi = m_frameFileNames.at(0);
 
         if(fi.exists()) { 
+            loadFrames(fi.absoluteFilePath());
+			m_activeFrameSetName = fi.baseName() + "." + fi.suffix();
         }  
     } 
 }
@@ -551,15 +556,13 @@ void Camera::splineInterpolation(){
 
 void Camera::determineMovement(){
     m_timerDiff = m_hpTimer.time() - m_timer;
-    m_secsPerFrame = (float)(m_timerDiff);
+    m_secsPerFrame = (float)(m_timerDiff) / 1000.0f;
 
     m_movementValue = (float)(m_desiredDistance * m_secsPerFrame);
     m_timer = m_hpTimer.time();
 }
 
 void Camera::render(Shader* shader){
-    shader->bind();
-
         glm::mat4 model(1.0f);
         shader->setMatrix("matModel", model);
 
@@ -569,21 +572,48 @@ void Camera::render(Shader* shader){
 
         renderFrames();
         renderSpline();
-
-    shader->release();
 }
 
 void Camera::renderFrames(){
+    if(m_camFrames.size() == 0) { 
+        return; 
+    } 
+
+    glm::vec4 frameColor(m_cameraColor.x, m_cameraColor.y, m_cameraColor.z, 0.7f);
+    // Add vertex data
+    vector<VertexBufferObjectAttribs::DATA> data;
+    float alpha_ratio = 1.0f / m_camFrames.size();
+    for(size_t i = 0; i < m_camFrames.size(); ++i) { 
+        float color_ratio = 1.0 - 0.5f * i * alpha_ratio;
+        glm::vec3 p = m_camFrames.at(i).pos;
+
+        VertexBufferObjectAttribs::DATA pv;
+        pv.vx = p.x;
+        pv.vy = p.y;
+        pv.vz = -p.z;
+        pv.cx = frameColor.x * color_ratio;
+        pv.cy = frameColor.y * color_ratio;
+        pv.cz = frameColor.z * color_ratio;
+        pv.cw = frameColor.w;
+        data.push_back(pv);
+    }
+
+    m_frameVBO->setData(&data[0], GL_STATIC_DRAW, data.size(), GL_POINTS);
+    m_frameVBO->bindAttribs();
+    glPointSize(10.0f); 
+        m_frameVBO->render();
+    glPointSize(1.0f);
 }
 
 void Camera::renderSpline(){
     if(!m_spline || m_spline->numPoints() == 0) 
         return;
 
-    glm::vec3 splineColor(0.0f, 0.807f, 0.819f);
+    glm::vec4 splineColor(0.0f, 0.807f, 0.819f, 0.7f);
     // Add vertex data
     vector<VertexBufferObjectAttribs::DATA> data;
     for(float f = 0.0f;  f<1.0f; f += 0.01f) { 
+        float color_ratio = 1.0f - 0.5f * f;
         glm::vec3 v = m_spline->interpolatedPoint(f);
 
         VertexBufferObjectAttribs::DATA pv;
@@ -593,10 +623,11 @@ void Camera::renderSpline(){
         pv.cx = splineColor.x;
         pv.cy = splineColor.y;
         pv.cz = splineColor.z;
+        pv.cw = splineColor.w;
         data.push_back(pv);
     }
 
-    m_splineVBO->setData(&data[0], GL_STATIC_DRAW, data.size(), GL_POINTS);
+    m_splineVBO->setData(&data[0], GL_STATIC_DRAW, data.size(), GL_LINE_STRIP);
     m_splineVBO->bindAttribs();
     m_splineVBO->render();
 }

@@ -82,6 +82,15 @@ struct GlobalObjectParams{
     GLuint shadowMapBlurredID;
 };
 
+struct GlobalBoundBox{
+    float minX = 1e10;
+    float maxX = -1e10;
+    float minY = 1e10;
+    float maxY = -1e10;
+    float minZ = 0.0f;
+    float maxZ = 0.0f;
+};
+
 //Singleton Template
 template<class T>
 class Singleton {
@@ -106,11 +115,18 @@ private:
 template<class T> T* Singleton<T>::m_pInstance = NULL;
 typedef Singleton<GlobalObjectParams> params;
 
+typedef Singleton<GlobalBoundBox>     BBOX;
+void updateBBOX(float minX, float maxX,
+                float minY, float maxY,
+                float minZ = 0.0f, float maxZ = 0.0f);
+
+glm::vec2 BBOXNormalize(float x, float y);
+
 float cosineInterpolation(float a, double b, double s);
 double hermiteInterpolation(double y0, double y1, double y2, double y3, double mu, double tension, double bias);
 
-void saveFrameBuffer(QOpenGLWidget* widget);
-void saveFrameBuffer(QOpenGLWidget* widget, int idx);
+void saveImage(QImage& img);
+void saveImage(QImage& img, int idx);
 
 void getCameraFrame(const Transform &trans, glm::vec3 &dir, glm::vec3 &up, glm::vec3 &right, glm::vec3 &pos);
 glm::vec3 getCamPosFromModelView(const Transform &trans);

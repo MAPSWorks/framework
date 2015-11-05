@@ -48,8 +48,8 @@ template <class T> T rand(const T &low, const T &high) { return rand() / (static
 
 class HPTimer{
 private:
-    std::chrono::time_point<std::chrono::system_clock> t0;
-    std::chrono::time_point<std::chrono::system_clock> t1;
+    std::chrono::time_point<std::chrono::high_resolution_clock> t0;
+    std::chrono::time_point<std::chrono::high_resolution_clock> t1;
 
     double et;
 
@@ -61,15 +61,15 @@ public:
 
     void reset()
     {
-        t0 = std::chrono::system_clock::now();
+        t0 = std::chrono::high_resolution_clock::now();
         et = 0.0;
     }
 
     double time()
     {
-        t1 = std::chrono::system_clock::now();
+        t1 = std::chrono::high_resolution_clock::now();
 
-        et = std::chrono::duration_cast<std::chrono::seconds>(t1 - t0).count();
+        et = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 
         return et;
         

@@ -30,23 +30,33 @@ public:
     SceneWidget(QWidget *parent=0);
     ~SceneWidget();
 
+public slots:
+    void slotLoadTrajectories(void);
+    void slotSaveTrajectories(void);
+    void slotLoadOpenStreetMap(void);
+
 protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
 
+    // Mouse event
     void wheelEvent(QWheelEvent *event);
-    void keyPressEvent(QKeyEvent* event);
-    void keyReleaseEvent(QKeyEvent* event);
-
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
 
+    // Keyboard event
+    void keyPressEvent(QKeyEvent* event);
+    void keyReleaseEvent(QKeyEvent* event);
+    
+    // Initialize display related parameters. params is a singleton
     void initParams();    
 
 private:
-    QPoint m_mouse;
+    QTimer               *m_timer;
+    QPoint               m_mouse;
     
     bool                 m_leftButton;
     bool                 m_rightButton;
@@ -60,13 +70,19 @@ private:
     int                  m_height;
     int                  m_frameNr;
 
+    // Camera transform
     Transform            m_trans;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_oldTime;
+
+    // m_lastFrameTime is used for counting time for animation
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_lastFrameTime;
 
     Scene                *m_scene;
     CameraManager        *m_cameraManager;
     Renderer             *m_renderer;
-    
+
+    unique_ptr<QMenu>    m_doubleClickMenu;
+    bool                 m_openingFile; // Stop updating drawing while opening files
+
 };
 
 #endif //SCENE_WIDGET_H_

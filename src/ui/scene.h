@@ -3,9 +3,10 @@
 
 #include "headers.h"
 #include "light.h"
+#include "trajectories.h"
+#include "openstreetmap.h"
 
 class NiceGrid;
-class Light;
 class VertexBufferObjectAttribs;
 class Shader;
 class CameraManager;
@@ -17,6 +18,12 @@ class Scene
 public:
     Scene(CameraManager *camManager);
     ~Scene();
+   
+    // Since there are some shared params for different drawing object. For example,
+    // the normalizing bounding box. Call this whenever there may be a change in 
+    // such params, so that each drawing object have a chance to update their 
+    // vertices data accordingly.
+    void updateDrawingData();
 
 	void update(float delta);
     void initShaders();
@@ -32,6 +39,8 @@ public:
 
 public:
     Light                     *m_light;
+    Trajectories              *m_trajectories;
+    OpenStreetMap             *m_osmMap;    
 
 private:
 

@@ -21,15 +21,30 @@ Scene::~Scene()
     } 
 
     // Delete Objects
-    delete m_light;
-    delete m_niceGrid;
+    if(m_light) { 
+        delete m_light;
+    } 
+    if(m_niceGrid) { 
+        delete m_niceGrid;
+    } 
 
     for (size_t i = 0; i < m_objects.size(); ++i) { 
         delete m_objects[i];
     } 
+
+    if(m_trajectories) { 
+        delete m_trajectories; 
+    } 
+
+    if(m_osmMap) { 
+        delete m_osmMap; 
+    } 
 }
 
 void Scene::initShaders(){
+    m_shaders["trajectory"]      = new Shader("../shader/Trajectory.vert.glsl", 
+                                           "../shader/Trajectory.frag.glsl");
+
     m_shaders["default"]      = new Shader("../shader/Default.vert.glsl", 
                                            "../shader/Default.frag.glsl");
 
@@ -61,11 +76,13 @@ void Scene::init()
                                 glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
                                 glm::vec4(0.2f, 0.596f, 0.859f, 1.0f));
     m_objects.push_back(sphere);
+
+    m_trajectories = new Trajectories();
+    m_osmMap       = new OpenStreetMap();
 }
 
 void Scene::renderWorld(const Transform &trans)
 {
-
     m_shaders["niceGrid"]->bind();
         m_shaders["niceGrid"]->setMatrix("matView", trans.view);
         m_shaders["niceGrid"]->setMatrix("matProjection", trans.projection);
@@ -80,12 +97,30 @@ void Scene::renderWorld(const Transform &trans)
 
         m_light->render(m_shaders["default"]);
         m_cameraManager->renderCameras(m_shaders["default"]);
+        m_trajectories->render(m_shaders["default"]);
 
     m_shaders["default"]->release();
 }
 
 void Scene::renderObjects(const Transform &trans)
 {
+    // Render Trajectories
+    //m_shaders["trajectory"]->bind();
+    //    m_shaders["trajectory"]->setMatrix("matView", trans.view);
+    //    m_shaders["trajectory"]->setMatrix("matProjection", trans.projection);
+
+    //    m_trajectories->render(m_shaders["trajectory"]);
+ 
+    //m_shaders["trajectory"]->release();
+
+    // Render OpenStreetMap
+    //m_shaders["default"]->bind();
+    //    m_shaders["default"]->setMatrix("matView", trans.view);
+    //    m_shaders["default"]->setMatrix("matProjection", trans.projection);
+
+    //    m_osmMap->render(m_shaders["default"]);
+    //m_shaders["default"]->release();
+
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
 
@@ -104,6 +139,7 @@ void Scene::renderObjects(const Transform &trans)
         }
 
     m_shaders["object"]->release();
+
 }
 
 void Scene::renderObjectsDepth(const Transform &trans)
@@ -130,7 +166,13 @@ void Scene::renderObjectsDepth(const Transform &trans)
  
 void Scene::update(float delta)
 {
-    m_light->update(delta);
+    //m_light->update(delta);
+    m_trajectories->update(delta);
+}
+
+void Scene::updateDrawingData(){
+    m_trajectories->prepareForVisualization();
+    m_osmMap->prepareForVisualization();
 }
 
 void Scene::select(const Transform &trans, int sw, int sh, int mx, int my)

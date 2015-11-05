@@ -11,17 +11,20 @@ CameraManager::CameraManager()
       m_ncp(1.0f),
       m_fcp(1000.0f),
       m_rotHeight(-1.0f),
-      m_rotate(10.0f, 40.0f, 0.0f),
+      m_rotate(20.0f, 0.0f, 0.0f),
       m_translate(0.0f, 0.0f, 0.0f),
-      m_zoom(-20.0f),
-      m_mouseSensivity(0.2f),
+      m_zoom(-50.0f),
+      m_orthoZoomTransX(0.0f),
+      m_orthoZoomTransY(0.0f),
+      m_orthoZoomMax(100.0f),
+      m_mouseSensitivity(0.1f),
       m_camSpeed(10.0f),
       m_useCam(false),
       m_active(0)
 {
-    Camera* cam0 = new Camera(glm::vec3(0.0f, 4.0f, 8.0f),
-                              0.0f,
-                              -10.0f,
+    Camera* cam0 = new Camera(glm::vec3(0.0f, 4.0f, 20.0f),
+                              180.0f,
+                              10.0f,
                               0.0f,
                               m_fov,
                               m_ncp,
@@ -53,31 +56,83 @@ void CameraManager::resize(float width, float height){
     } 
 }
 
+void CameraManager::toggleCameraMode(){
+    if(m_conf == PERSPECTIVE) { 
+        m_conf = ORTHOGONAL; 
+    }  
+    else{
+        m_conf = PERSPECTIVE;
+    }
+}
+
+void CameraManager::computeViewProjection(){
+    if (m_conf == PERSPECTIVE) { 
+        // Perspective Camera
+        m_projection = glm::perspective(m_fov, m_aspect, m_ncp, m_fcp);    
+        m_view = glm::mat4(1.0f);
+
+        // Translation
+        m_view = glm::translate(m_view, glm::vec3(0.0f, m_rotHeight, 0.0f));
+        m_view = glm::translate(m_view, glm::vec3(0.0f, 0.0f, m_zoom));
+        m_view = glm::translate(m_view, m_translate);
+
+        // Rotation
+        m_view = glm::rotate(m_view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        m_view = glm::rotate(m_view, glm::radians(m_rotate.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    } 
+    else{
+        // Orthogonal Camera
+        float orthoWidth, orthoHeight;
+        if(m_zoom < 1.0f) { 
+           orthoWidth = m_width * (2.0f - m_zoom); 
+           orthoHeight = m_height * (2.0f - m_zoom); 
+        } 
+        else{
+           orthoWidth = m_width / m_zoom; 
+           orthoHeight = m_height / m_zoom; 
+        }
+
+        float orthoLeft   = (m_orthoZoomTransX - orthoWidth/2.0f) * m_aspect;
+        float orthoRight  = (m_orthoZoomTransX + orthoWidth/2.0f) * m_aspect;
+        float orthoBottom = m_orthoZoomTransY - orthoHeight/2.0f;
+        float orthoTop    = m_orthoZoomTransY + orthoHeight/2.0f;
+        
+        m_projection = glm::ortho(orthoLeft,
+                                          orthoRight,
+                                          orthoBottom,
+                                          orthoTop,
+                                          -m_fcp,
+                                          m_fcp);
+
+        m_view = glm::mat4(1.0f);
+        
+        m_view = glm::translate(m_view, glm::vec3(0.0f, m_rotHeight, 0.0f));
+        m_view = glm::translate(m_view, glm::vec3(0.0f, 0.0f, m_zoom));
+       
+        m_view = glm::rotate(m_view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        m_view = glm::rotate(m_view, glm::radians(m_rotate.y), glm::vec3(0.0f, 1.0f, 0.0f)); 
+    }
+}
+
 void CameraManager::currentMatrices(Transform& trans){
     if (m_useCam) { 
         m_cameras[m_active]->determineMovement();
         m_cameras[m_active]->update();
+        m_cameras[m_active]->interpolate();
 
         // Update trans
         m_cameras[m_active]->getMatrices(trans);
     } 
     else{
-        if (m_conf == PERSPECTIVE) { 
-            glm::mat4 projection = glm::perspective(m_fov, m_aspect, m_ncp, m_fcp);    
-            glm::mat4 view(1.0f);
-            view = glm::translate(view, glm::vec3(0.0f, m_rotHeight, 0.0f));
-            view = glm::translate(view, glm::vec3(0.0f, 0.0f, m_zoom));
-            view = glm::rotate(view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
-            view = glm::rotate(view, glm::radians(m_rotate.y), glm::vec3(0.0f, 1.0f, 0.0f));
-
-            // Update trans
-            trans.projection = projection;
-            trans.view = view;
-            trans.viewProjection = projection * view;
-        } 
-        else{
-        }
+        computeViewProjection(); 
+        // Update trans
+        trans.projection = m_projection;
+        trans.view = m_view;
+        trans.viewProjection = m_projection * m_view;
     }
+
+    // Update global params' fov, ncp, fcp, camPos
+    currentCamToParams();
 }
 
 void CameraManager::changeRotHeight(float delta) {
@@ -85,34 +140,82 @@ void CameraManager::changeRotHeight(float delta) {
 }
 
 // Keyboard / Mouse Response
+// button = 0: left button
+// button = 1: right button
 void CameraManager::onMouseMove(float dx, float dy, int button){
     if (button == 0) { 
         if (m_useCam) { 
-            m_cameras[m_active]->changeHeading(m_mouseSensivity * dx);
-            m_cameras[m_active]->changePitch(m_mouseSensivity * dy);
+            m_cameras[m_active]->changeHeading(m_mouseSensitivity * dx);
+            m_cameras[m_active]->changePitch(m_mouseSensitivity * dy);
         } 
         else{
-            m_rotate.y -= (0.1 * dx);
-            m_rotate.x -= (0.1 * dy);
+            m_rotate.y -= (m_mouseSensitivity * dx);
+            m_rotate.x -= (m_mouseSensitivity * dy);
         }
     } 
     else{
-        m_cameras[m_active]->changeHeading(m_mouseSensivity * dx);
-        m_cameras[m_active]->changePitch(m_mouseSensivity * dy);
+        if(m_useCam) { 
+                
+        } 
+        else{
+            m_translate.x += (m_mouseSensitivity * dx); 
+            m_translate.y += (m_mouseSensitivity * dy); 
+        }
     }
 }
 
 void CameraManager::onMouseWheel(int dir,
                                  double tx,
                                  double ty){
-    float delta = m_zoom * -0.01 * abs(dir);
+    float delta = abs(m_zoom) * 0.01 * abs(dir);
+    if(delta < 0.1) { 
+        delta = 0.1; 
+    } 
 
+    float prev_zoom = m_zoom;
+
+    float max_zoom = 800.0f;
     if (dir > 0) { 
         m_zoom += delta;
+        if(m_zoom > 1.0) { 
+            m_zoom = 1.0; 
+        } 
     }
     else{
         m_zoom -= delta;
+        if(m_zoom < -max_zoom) { 
+            m_zoom = -max_zoom; 
+        } 
     }
+
+    if(m_conf == ORTHOGONAL) { 
+        float prevOrthoWidth, prevOrthoHeight;
+        if(m_zoom < 1.0f) { 
+           prevOrthoWidth = m_width * (2.0f - prev_zoom); 
+           prevOrthoHeight = m_height * (2.0f - prev_zoom); 
+        } 
+        else{
+           prevOrthoWidth = m_width / prev_zoom; 
+           prevOrthoHeight = m_width / prev_zoom; 
+        }
+        double prex = tx * prevOrthoWidth;
+        double prey = ty * prevOrthoHeight;
+
+        float orthoWidth, orthoHeight;
+        if(m_zoom < 1.0f) { 
+           orthoWidth = m_width * (2.0f - m_zoom); 
+           orthoHeight = m_height * (2.0f - m_zoom); 
+        } 
+        else{
+           orthoWidth = m_width / m_zoom; 
+           orthoHeight = m_height / m_zoom; 
+        } 
+        double postx = tx * orthoWidth;
+        double posty = ty * orthoHeight;
+
+        m_orthoZoomTransX += (prex - postx);
+        m_orthoZoomTransY += (prey - posty);
+    } 
 }
 
 void CameraManager::onKeyPress(int keyId){
@@ -151,15 +254,21 @@ void CameraManager::onKeyRelease(int keyId) {
 	}
 }
 
+vector<Camera*> CameraManager::cameras(){
+    return m_cameras;
+}
+
 void CameraManager::toggleCam(){
     if (!m_useCam) { 
         m_useCam = true; 
+        cout << "CameraManager: using camera." << endl;
     } 
     else{
         m_active++;
         if(m_active > (int)m_cameras.size() - 1){
             m_active = 0;
             m_useCam = false;
+            cout << "CameraManager: NOT using camera." << endl;
         }
     }
 }
@@ -206,13 +315,7 @@ glm::vec3 CameraManager::currentCamPos(){
         return lodCamPos(); 
     } 
     else{
-        glm::mat4 view(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, m_rotHeight, 0.0f));
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, m_zoom));
-        view = glm::rotate(view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        view = glm::rotate(view, glm::radians(m_rotate.y), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        glm::vec4 camPos = glm::inverse(view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        glm::vec4 camPos = glm::inverse(m_view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         return glm::vec3(camPos.x, camPos.y, camPos.z);
     }
 }
@@ -266,13 +369,7 @@ void CameraManager::currentCamToParams(){
         params::inst()->ncp = m_ncp;
         params::inst()->fcp = m_fcp;
 
-        glm::mat4 view(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, m_rotHeight, 0.0f));
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, m_zoom));
-        view = glm::rotate(view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        view = glm::rotate(view, glm::radians(m_rotate.y), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        glm::vec4 camPos = glm::inverse(view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        glm::vec4 camPos = glm::inverse(m_view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         params::inst()->camPos = glm::vec3(camPos.x, camPos.y, camPos.z);
     }
 }
@@ -284,25 +381,25 @@ void CameraManager::lockCurCamera(){
 }
 
 void CameraManager::toggleInterpolation(){
-
+    m_cameras[m_active]->toggleInterpolation();
 }
 
 void CameraManager::addFrame(){
+    m_cameras[m_active]->autoAddFrame();
 }
 
 void CameraManager::clearFrameset(){
-
+    m_cameras[m_active]->clearFrames();
 }
 
 void CameraManager::saveFrameset(){
-
+    m_cameras[m_active]->saveFrames();
 }
 
 void CameraManager::toggleFrameset(){
-
+    m_cameras[m_active]->changeFrameSet();
 }
 
 QString CameraManager::currentFramesetName(){
-    //return m_cameras[m_active]->frameSetName();
-    return "hello";
+    return m_cameras[m_active]->frameSetName();
 }

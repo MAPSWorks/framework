@@ -1,5 +1,4 @@
 build/
-data/
 .DS_Store
 *.pb.h
 *.pb.cc

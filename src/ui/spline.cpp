@@ -35,20 +35,30 @@ void Spline::addPoint(const glm::vec3 &v)
         glm::vec3 tStart = m_points[1];
 
         glm::vec3 nStart = glm::vec3(sStart - tStart);
-        float lenStart = nStart.length();
-        nStart = glm::normalize(nStart);
-        glm::vec3 tmp = nStart * lenStart * 0.5f;
-        m_phantomStart = sStart + tmp;
+        float lenStart = glm::length(nStart);
+        if(lenStart < 1e-5) { 
+            m_phantomStart = sStart; 
+        } 
+        else{
+            nStart = glm::normalize(nStart);
+            glm::vec3 tmp = nStart * lenStart * 0.5f;
+            m_phantomStart = sStart + tmp;
+        }
 
         unsigned int size = m_points.size() - 1;
         glm::vec3 sEnd = m_points[size];
         glm::vec3 tEnd = m_points[size - 1];
 
         glm::vec3 nEnd = glm::vec3(sEnd - tEnd);
-        float lenEnd = nEnd.length();
-        nEnd = glm::normalize(nEnd);
-        glm::vec3 tmp1 = nEnd * lenEnd * 0.5f;
-        m_phantomEnd = sEnd +  tmp1;
+        float lenEnd = glm::length(nEnd);
+        if(lenEnd < 1e-5) { 
+            m_phantomEnd = sEnd;             
+        } 
+        else{
+            nEnd = glm::normalize(nEnd);
+            glm::vec3 tmp1 = nEnd * lenEnd * 0.5f;
+            m_phantomEnd = sEnd +  tmp1;        
+        }
     }
 }
 
@@ -307,7 +317,7 @@ glm::vec3 Spline::roundedCatmullRomInterpolation(const glm::vec3 &p0, const glm:
     glm::vec3 cVelo = dc - bc;
     cVelo = glm::normalize(cVelo);
 
-    float cbDist = cb.length();
+    float cbDist = glm::length(cb);
 
     return Spline::catmullRomInterpolation(bVelo * cbDist, p1, p2, cVelo * cbDist, t);
 }
