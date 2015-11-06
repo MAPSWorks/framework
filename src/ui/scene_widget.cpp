@@ -229,14 +229,20 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event){
     float dy = clamp(diff.y(), -MAX_DIFF, MAX_DIFF);
 
     // Left button for translation, right button for rotation
-    if(m_leftButton)
-    {            		
-        m_cameraManager->onMouseMove(diff.x(), diff.y(), 0);
-    }
-    else if(m_rightButton)
-    {
-        m_cameraManager->onMouseMove(diff.x(), diff.y(), 1);
-    }
+    if(!m_shiftPressed) { 
+        if(m_leftButton)
+        {            		
+            m_cameraManager->onMouseMove(diff.x(), diff.y(), 0);
+        }
+        else if(m_rightButton)
+        {
+            m_cameraManager->onMouseMove(diff.x(), diff.y(), 1);
+        }      
+    } 
+   
+    if(m_leftButton && m_shiftPressed) { 
+        m_scene->m_light->move(m_cameraManager, diff.x()*0.1, diff.y()*0.1); 
+    }  
 
     m_mouse.setX(event->x());
     m_mouse.setY(event->y());
@@ -291,8 +297,15 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         case Qt::Key_F8:
             m_cameraManager->saveFrameset();
             break;
+
         case Qt::Key_I:
             m_cameraManager->toggleInterpolation();
+            break;
+        case Qt::Key_P:
+            loop(params::inst()->gridRenderMode, 0, 3);
+            break;
+        case Qt::Key_U:
+            params::inst()->applyShadow = !params::inst()->applyShadow;
             break;
         //case Qt::Key_PageUp: 
         //    m_cameraManager->increaseSpeed();
@@ -312,10 +325,9 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         //    m_altPressed = true;
         //    m_noOtherKey = false;
         //    break;
-        //case Qt::Key_Shift:
-        //    m_shiftPressed = true;
-        //    m_noOtherKey = false;
-        //    break;
+        case Qt::Key_Shift:
+            m_shiftPressed = true;
+            break;
         default:
             break;
     }
@@ -334,10 +346,9 @@ void SceneWidget::keyReleaseEvent(QKeyEvent* event){
         //    m_altPressed = false;
         //    m_noOtherKey = true;
         //    break;
-        //case Qt::Key_Shift:
-        //    m_shiftPressed = false;
-        //    m_noOtherKey = true;
-        //    break;
+        case Qt::Key_Shift:
+            m_shiftPressed = false;
+            break;
         default:
             break;
     }

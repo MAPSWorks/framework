@@ -44,7 +44,7 @@ void NiceGrid::render(Shader* shader)
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapID);    
-        shader->seti("shadowMap", 1);   
+        shader->seti("shadowMap", 1); 
 
         shader->set3f("lightPos", params::inst()->lightPos);
         shader->set3f("lightDir", params::inst()->lightDir);

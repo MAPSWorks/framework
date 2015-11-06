@@ -66,7 +66,7 @@ void Scene::init()
 {
     initShaders(); 
 
-    m_light = new Light(this, glm::vec3(-10.0f, 30.0f, 0.1f));
+    m_light = new Light(this, glm::vec3(10.0f, 30.0f, 10.0f));
     params::inst()->lightPos = m_light->position();
 	m_niceGrid = new NiceGrid(100.0f, 40.0f);  
 
@@ -129,6 +129,8 @@ void Scene::renderObjects(const Transform &trans)
         m_shaders["object"]->setMatrix("matView", trans.view);
         m_shaders["object"]->setMatrix("matProjection", trans.projection);
         m_shaders["object"]->setMatrix("matLightView", trans.lightView);
+        m_shaders["object"]->set3fv("lightPos", glm::value_ptr(params::inst()->lightPos));
+        m_shaders["object"]->set3fv("lightDir", glm::value_ptr(params::inst()->lightDir));
 
         if (params::inst()->renderObjects)
         {

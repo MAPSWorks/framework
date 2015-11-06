@@ -21,7 +21,7 @@ Light::Light(Scene *scene, const glm::vec3 &pos)
     m_movement(0.0f),
     m_moved(true),
     m_ncpLight(1.0f),
-    m_fcpLight(200.0f),
+    m_fcpLight(500.0f),
     m_fovLight(90.0f),
     m_bufferWidth(2048),
     m_bufferHeight(2048)
@@ -34,7 +34,6 @@ Light::Light(Scene *scene, const glm::vec3 &pos)
 
     m_fboLight = new FrameBufferObject(m_bufferWidth, m_bufferHeight);
     m_fboLight->createDepthTexture();
-
 }
 
 Light::~Light()
@@ -52,8 +51,16 @@ void Light::renderLightView(glm::mat4 &lightView,
     if(m_moved)
     {
         // Directional light 
-        glm::mat4 projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 70.0f); 
-        glm::mat4 view = glm::lookAt(params::inst()->lightPos, glm::vec3(0.0f), glm::vec3(1.0));
+        glm::mat4 projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f); 
+        glm::mat4 view = glm::lookAt(m_position, glm::vec3(0.0f), glm::vec3(1.0));
+
+        params::inst()->lightPos = m_position;
+        glm::vec3 vec = -m_position;
+        
+        params::inst()->lightDir = glm::normalize(vec);
+
+        //glm::mat4 projection = glm::perspective(m_fovLight, (float)m_bufferWidth/(float)m_bufferHeight, m_ncpLight, m_fcpLight);
+        //glm::mat4 view = glm::lookAt(m_position, glm::vec3(0.0, 5.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
 
         Transform transLight;
         transLight.view = view; 
@@ -61,15 +68,15 @@ void Light::renderLightView(glm::mat4 &lightView,
         transLight.viewProjection = projection * view;
         transLight.lightView = projection * view;
 
+        glViewport(0, 0, m_bufferWidth, m_bufferHeight);
         m_fboLight->bind();
 
-            glViewport(0, 0, m_bufferWidth, m_bufferHeight);
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);    
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     
+            glClear(GL_DEPTH_BUFFER_BIT);     
 
             m_scene->renderObjectsDepth(transLight);        
 
         m_fboLight->release();
+        glViewport(0, 0, params::inst()->windowSize.x, params::inst()->windowSize.y);
 
         m_lightView = transLight.lightView;
         lightView = m_lightView;
@@ -149,9 +156,12 @@ void Light::move(CameraManager *camManager, float diffX, float diffY)
         movZ = glm::vec3(0, 0, m_position.z) + onPlane * diffY;
         movX = glm::vec3(m_position.x, 0, 0) + right * diffX;
 
-        glm::vec3 result = movX + movY + movZ ;
+        glm::vec3 result = movX + movY + movZ;
 
-        m_position = result;
+        float clamped_x = clamp(result.x, -50.0f, 50.0f);
+        float clamped_z = clamp(result.z, -50.0f, 50.0f);
+
+        m_position = glm::vec3(clamped_x, result.y, clamped_z);
 
         if(m_record)
         {

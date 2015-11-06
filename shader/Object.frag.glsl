@@ -86,7 +86,7 @@ void main()
         s = 0;
 	
     vec3 lColor      = vec3(1, 1, 1);
-    vec3 matAmbient  = vec3(0.0, 0.0, 0.0);
+    vec3 matAmbient  = vec3(0.1, 0.1, 0.1);
     vec3 matDiffuse  = VertColor.rgb;
     vec3 matSpecular = vec3(1, 1, 1);
 

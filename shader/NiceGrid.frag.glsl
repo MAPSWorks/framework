@@ -81,7 +81,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
 void main()
 {
-    float shadow = 1.0;
+    float shadow = 0.0;
     if(applyShadow == 1)    
     {
        shadow = ShadowCalculation(fs_in.FragPosLightSpace);
