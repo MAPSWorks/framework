@@ -47,40 +47,36 @@ void Object::render(Shader* shader)
 
     glEnable(GL_CLIP_DISTANCE0);    
 
-	shader->bind();  
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapID);    
+    shader->seti("shadowMap", 1);   
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapID);    
-        shader->seti("shadowMap", 1);   
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapBlurredID);    
+    shader->seti("shadowMapBlurred", 2);  
 
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapBlurredID);    
-        shader->seti("shadowMapBlurred", 2);  
+    shader->set3f("lightPos", params::inst()->lightPos);        
+    shader->set3f("camPos", params::inst()->camPos);      
+    shader->seti("applyShadow", params::inst()->applyShadow);
+    shader->setf("shadowIntensity", params::inst()->shadowIntensity);
+    shader->seti("isSelected", m_isSelected);
 
-        shader->set3f("lightPos", params::inst()->lightPos);        
-        shader->set3f("camPos", params::inst()->camPos);      
-        shader->seti("applyShadow", params::inst()->applyShadow);
-        shader->setf("shadowIntensity", params::inst()->shadowIntensity);
-        shader->seti("isSelected", m_isSelected);
+    shader->set4f("clipPlane", params::inst()->clipPlaneGround);
 
-        shader->set4f("clipPlane", params::inst()->clipPlaneGround);
+    for(uint i=0; i<m_vbosTriangles.size(); ++i)
+    {
+        m_vbosTriangles[i]->render();
+    }
 
-        for(uint i=0; i<m_vbosTriangles.size(); ++i)
+    if (params::inst()->renderMesh)
+    {
+
+        for(uint i=0; i<m_vbosLines.size(); ++i)
         {
-            m_vbosTriangles[i]->render();
+            m_vbosLines[i]->render();
         }
 
-        if (params::inst()->renderMesh)
-        {
-
-            for(uint i=0; i<m_vbosLines.size(); ++i)
-            {
-                m_vbosLines[i]->render();
-            }
-
-        }
-
-	shader->release();
+    }
 
 	glDisable(GL_CULL_FACE);    
 }
