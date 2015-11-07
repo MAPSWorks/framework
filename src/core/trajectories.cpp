@@ -134,7 +134,7 @@ void Trajectories::updatePointVBO(){
 
     for(size_t i = 0; i < m_easting.size(); ++i) { 
         VertexBufferObjectAttribs::DATA newPt;
-        glm::vec2 normalizedV = BBOXNormalize(m_easting[i], m_northing[i]);
+        glm::vec3 normalizedV = BBOXNormalize(m_easting[i], m_northing[i], 0.0);
         newPt.vx = normalizedV.x * 100; 
         newPt.vy = m_speed[i] / 500.0f;
         //newPt.vy = 1.0f;
@@ -182,7 +182,7 @@ void Trajectories::updateAnimateVBO(){
                 break;
 
             VertexBufferObjectAttribs::DATA newPt;
-            glm::vec2 normalizedV = BBOXNormalize(m_easting[traj[j]], m_northing[traj[j]]);
+            glm::vec3 normalizedV = BBOXNormalize(m_easting[traj[j]], m_northing[traj[j]], 0.0);
             newPt.vx = normalizedV.x * 100; 
             //newPt.vy = m_speed[traj[j]] / 500.0f;
             newPt.vy = 1.0f;

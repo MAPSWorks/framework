@@ -216,10 +216,10 @@ bool OpenStreetMap::load(const string& filename){
         m_indexedRoads.push_back(indexed_road);
     } 
 
-    printf("bbox: %.2f, %.2f, %.2f, %.2f\n", BBOX::inst()->minX,
-                                             BBOX::inst()->maxX,
-                                             BBOX::inst()->minY,
-                                             BBOX::inst()->minY);
+    printf("bbox: %.2f, %.2f, %.2f, %.2f\n", params::inst()->minBBOX.x,
+                                             params::inst()->maxBBOX.x,
+                                             params::inst()->minBBOX.y,
+                                             params::inst()->maxBBOX.y);
     printf("updated bbox: %.2f, %.2f, %.2f, %.2f\n", m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
     updateBBOX(m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
     printf("OpenStreetMap Loaded, there are %lu ways, %lu nodes\n", handler.getWays().size(), handler.getNodes().size());
@@ -323,10 +323,10 @@ void OpenStreetMap::prepareForVisualization(){
         auto source_v = source(*eit, m_graph);
         auto target_v = target(*eit, m_graph);
 
-        glm::vec2 normalizedSourceV = BBOXNormalize(m_graph[source_v].easting,
-                                                    m_graph[source_v].northing);
-        glm::vec2 normalizedTargetV = BBOXNormalize(m_graph[target_v].easting,
-                                                    m_graph[target_v].northing);
+        glm::vec3 normalizedSourceV = BBOXNormalize(m_graph[source_v].easting,
+                                                    m_graph[source_v].northing, 0.0);
+        glm::vec3 normalizedTargetV = BBOXNormalize(m_graph[target_v].easting,
+                                                    m_graph[target_v].northing, 0.0);
 
         VertexBufferObjectAttribs::DATA source_pt, target_pt;
         source_pt.vx = normalizedSourceV.x * 100;

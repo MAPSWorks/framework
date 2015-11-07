@@ -62,6 +62,11 @@ struct GlobalObjectParams{
     glm::vec2 windowSize;
     glm::vec4 clipPlaneGround;
     
+    // Global Bounding Box for Coordinate Normalization
+    bool      bboxUpdated = false;
+    glm::vec3 minBBOX = glm::vec3(1e10, 1e10, 1e10); // minimum Bounding Box (x, y, z)
+    glm::vec3 maxBBOX = glm::vec3(-1e10, -1e10, -1e10); // maximum Bounding Box (x, y, z)
+    
     int   gridRenderMode;
     int   polygonMode;
 
@@ -80,15 +85,6 @@ struct GlobalObjectParams{
 
     GLuint shadowMapID;
     GLuint shadowMapBlurredID;
-};
-
-struct GlobalBoundBox{
-    float minX = 1e10;
-    float maxX = -1e10;
-    float minY = 1e10;
-    float maxY = -1e10;
-    float minZ = 0.0f;
-    float maxZ = 0.0f;
 };
 
 //Singleton Template
@@ -115,12 +111,12 @@ private:
 template<class T> T* Singleton<T>::m_pInstance = NULL;
 typedef Singleton<GlobalObjectParams> params;
 
-typedef Singleton<GlobalBoundBox>     BBOX;
+void resetBBOX();
 void updateBBOX(float minX, float maxX,
                 float minY, float maxY,
                 float minZ = 0.0f, float maxZ = 0.0f);
 
-glm::vec2 BBOXNormalize(float x, float y);
+glm::vec3 BBOXNormalize(float x, float y, float z);
 
 float cosineInterpolation(float a, double b, double s);
 double hermiteInterpolation(double y0, double y1, double y2, double y3, double mu, double tension, double bias);

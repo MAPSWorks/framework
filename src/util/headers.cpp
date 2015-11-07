@@ -7,40 +7,58 @@ Created by Chen Chen on 09/28/2015
 
 #include "headers.h"
 
+void resetBBOX(){
+    params::inst()->minBBOX = glm::vec3(1e10, 1e10, 1e10); 
+    params::inst()->maxBBOX = glm::vec3(-1e10, -1e10, -1e10);
+}
+
 void updateBBOX(float minX, float maxX,
                 float minY, float maxY,
                 float minZ, float maxZ){
-    if(BBOX::inst()->minX > minX) { 
-        BBOX::inst()->minX = minX;
+    glm::vec3& minBBOX = params::inst()->minBBOX;
+    glm::vec3& maxBBOX = params::inst()->maxBBOX;
+    if(minBBOX.x > minX) { 
+        minBBOX.x = minX;
     } 
-    if(BBOX::inst()->maxX < maxX) { 
-        BBOX::inst()->maxX = maxX; 
+    if(maxBBOX.x  < maxX) { 
+        maxBBOX.x = maxX; 
     } 
 
-    if(BBOX::inst()->minY > minY) { 
-        BBOX::inst()->minY = minY;
+    if(minBBOX.y > minY) { 
+        minBBOX.y = minY;
     } 
-    if(BBOX::inst()->maxY < maxY) { 
-        BBOX::inst()->maxY = maxY; 
+    if(maxBBOX.y < maxY) { 
+        maxBBOX.y = maxY; 
     }
 
-    if(BBOX::inst()->minZ > minZ) { 
-        BBOX::inst()->minZ = minZ;
+    if(minBBOX.z > minZ) { 
+        minBBOX.z = minZ;
     } 
-    if(BBOX::inst()->maxZ < maxZ) { 
-        BBOX::inst()->maxZ = maxZ; 
+    if(maxBBOX.z < maxZ) { 
+        maxBBOX.z = maxZ; 
     }
 }
 
-glm::vec2 BBOXNormalize(float x, float y){
-    float lx = BBOX::inst()->maxX - BBOX::inst()->minX; 
-    float ly = BBOX::inst()->maxY - BBOX::inst()->minY; 
-    float l = (lx > ly) ? lx : ly;
+glm::vec3 BBOXNormalize(float x, float y, float z){
+    glm::vec3 minBBOX = params::inst()->minBBOX;
+    glm::vec3 maxBBOX = params::inst()->maxBBOX;
 
-    float newX = (x - BBOX::inst()->minX) / l * 2.0f - 1.0f;
-    float newY = (y - BBOX::inst()->minY) / l * 2.0f - 1.0f;
+    float lx = maxBBOX.x - minBBOX.x; 
+    float ly = maxBBOX.y - minBBOX.y; 
+    float lz = maxBBOX.z - minBBOX.z; 
+    float l = lx;
+    if(l < ly) { 
+        l = ly; 
+    } 
+    if(l < lz) { 
+        l = lz; 
+    } 
 
-    return glm::vec2(newX, newY);
+    float newX = (x - minBBOX.x) / l * 2.0f - 1.0f;
+    float newY = (y - minBBOX.y) / l * 2.0f - 1.0f;
+    float newZ = (y - minBBOX.z) / l * 2.0f - 1.0f;
+
+    return glm::vec3(newX, newY, newZ);
 }
 
 float cosineInterpolation(float a, double b, double s)

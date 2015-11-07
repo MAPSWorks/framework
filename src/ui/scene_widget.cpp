@@ -307,6 +307,9 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         case Qt::Key_U:
             params::inst()->applyShadow = !params::inst()->applyShadow;
             break;
+        case Qt::Key_Space:
+            loop(params::inst()->polygonMode, 0, 1, 1);
+            break;
         //case Qt::Key_PageUp: 
         //    m_cameraManager->increaseSpeed();
         //    break;

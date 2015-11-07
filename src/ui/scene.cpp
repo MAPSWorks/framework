@@ -70,12 +70,12 @@ void Scene::init()
     params::inst()->lightPos = m_light->position();
 	m_niceGrid = new NiceGrid(100.0f, 40.0f);  
 
-    //Object *sphere = new Object("../data/Objs/sphere.obj", 
-    //                            glm::vec3(0.0f, 1.0f, 0.0f), 
-    //                            glm::vec3(1.0f, 1.0f, 1.0f), 
-    //                            glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
-    //                            glm::vec4(0.2f, 0.596f, 0.859f, 1.0f));
-    //m_objects.push_back(sphere);
+    Object *sphere = new Object("../data/Objs/sphere.obj", 
+                                glm::vec3(0.0f, 1.0f, 0.0f), 
+                                glm::vec3(1.0f, 1.0f, 1.0f), 
+                                glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
+                                glm::vec4(0.2f, 0.596f, 0.859f, 1.0f));
+    m_objects.push_back(sphere);
 
     m_trajectories = new Trajectories();
     m_osmMap       = new OpenStreetMap();
