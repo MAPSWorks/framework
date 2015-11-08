@@ -14,9 +14,8 @@ NiceGrid::NiceGrid(GLfloat size, GLfloat rep)
   m_vbo(NULL),
   m_position(0.0f, 0.0f, 0.0f)
 {
-    QImage tex("../data/floor_grey.png");
 
-    m_texture = new Texture(tex);
+    m_texture = new Texture("../data/floor_grey.png");
     m_texture->setWrapMode(GL_REPEAT);
 
     createVBO();

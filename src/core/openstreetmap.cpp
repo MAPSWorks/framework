@@ -216,13 +216,9 @@ bool OpenStreetMap::load(const string& filename){
         m_indexedRoads.push_back(indexed_road);
     } 
 
-    printf("bbox: %.2f, %.2f, %.2f, %.2f\n", params::inst()->minBBOX.x,
-                                             params::inst()->maxBBOX.x,
-                                             params::inst()->minBBOX.y,
-                                             params::inst()->maxBBOX.y);
-    printf("updated bbox: %.2f, %.2f, %.2f, %.2f\n", m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
     updateBBOX(m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
     printf("OpenStreetMap Loaded, there are %lu ways, %lu nodes\n", handler.getWays().size(), handler.getNodes().size());
+    printf("\tupdated bbox: %.2f, %.2f, %.2f, %.2f\n", m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
 
     return true;
 }
@@ -230,7 +226,7 @@ bool OpenStreetMap::load(const string& filename){
 void OpenStreetMap::interpolateMap(){
     m_mapPoints->clear();
     m_pointHeading.clear();
-    m_graphVertex.clear();
+    m_graphVertices.clear();
     printf("Start interpolating OpenStreetMap with %.1f meter accuracy......", m_interpolation);
     // Iterate over the edges
     auto es = boost::edges(m_graph);
@@ -258,7 +254,7 @@ void OpenStreetMap::interpolateMap(){
                          0.0f);
         m_mapPoints->push_back(point);
         m_pointHeading.push_back(heading);
-        m_graphVertex.push_back(source_v);
+        m_graphVertices.push_back(source_v);
         
         if(m_graph[*eit].length > m_interpolation) { 
             // Insert point
@@ -272,10 +268,10 @@ void OpenStreetMap::interpolateMap(){
                 m_mapPoints->push_back(point);
                 m_pointHeading.push_back(heading);
                 if(i < n_pt_to_insert / 2){
-                    m_graphVertex.push_back(source_v);
+                    m_graphVertices.push_back(source_v);
                 }
                 else{
-                    m_graphVertex.push_back(target_v);
+                    m_graphVertices.push_back(target_v);
                 }
             } 
         } 
@@ -286,7 +282,7 @@ void OpenStreetMap::interpolateMap(){
                             0.0f);
         m_mapPoints->push_back(point);
         m_pointHeading.push_back(heading);
-        m_graphVertex.push_back(target_v);
+        m_graphVertices.push_back(target_v);
     }
 
     m_searchTree->setInputCloud(m_mapPoints);
@@ -299,22 +295,16 @@ void OpenStreetMap::render(Shader* shader){
 
     shader->setMatrix("matModel", model);
 
-    if(!m_dataUpdated){
-        prepareForVisualization();
-    }
-
     // Render Points
-    glDisable(GL_DEPTH_TEST);
     glPointSize(10.0f);    
     m_pointVBO->render();
     glPointSize(1.0f);    
 
     // Render Lines
     m_lineVBO->render();
-    glEnable(GL_DEPTH_TEST);
 }
 
-void OpenStreetMap::prepareForVisualization(){
+void OpenStreetMap::prepareForRendering(){
     vector<VertexBufferObjectAttribs::DATA> vertexData;
     auto es = boost::edges(m_graph);
     for(auto eit = es.first; eit != es.second; ++eit) { 
@@ -330,6 +320,7 @@ void OpenStreetMap::prepareForVisualization(){
 
         VertexBufferObjectAttribs::DATA source_pt, target_pt;
         source_pt.vx = normalizedSourceV.x * 100;
+        source_pt.vy = 1.0f;
         source_pt.vz = -normalizedSourceV.y * 100;
         source_pt.cx = edge_color.r;
         source_pt.cy = edge_color.g;
@@ -337,6 +328,7 @@ void OpenStreetMap::prepareForVisualization(){
         source_pt.cw = edge_color.w;
 
         target_pt.vx = normalizedTargetV.x * 100;
+        target_pt.vy = 1.0f;
         target_pt.vz = -normalizedTargetV.y * 100;
         target_pt.cx = edge_color.r;
         target_pt.cy = edge_color.g;
@@ -364,7 +356,7 @@ void OpenStreetMap::clear(){
 
     m_mapPoints->clear();
     m_pointHeading.clear();
-    m_graphVertex.clear();
+    m_graphVertices.clear();
 
     m_indexedRoads.clear();
     m_boundBox = Eigen::Vector4f(POSITIVE_INFINITY,
@@ -374,3 +366,9 @@ void OpenStreetMap::clear(){
     m_graph.clear();
 }
 
+bool OpenStreetMap::isEmpty(){
+    if(m_indexedRoads.empty()) { 
+        return true; 
+    } 
+    return false;
+}

@@ -39,6 +39,7 @@ Scene::~Scene()
     if(m_osmMap) { 
         delete m_osmMap; 
     } 
+
 }
 
 void Scene::initShaders(){
@@ -100,26 +101,37 @@ void Scene::renderWorld(const Transform &trans)
         m_trajectories->render(m_shaders["default"]);
 
     m_shaders["default"]->release();
+
 }
 
 void Scene::renderObjects(const Transform &trans)
 {
+    if(params::inst()->bboxUpdated) { 
+        m_trajectories->prepareForRendering();
+        m_osmMap->prepareForRendering();
+        params::inst()->bboxUpdated = false; 
+    } 
+
     // Render Trajectories
-    //m_shaders["trajectory"]->bind();
-    //    m_shaders["trajectory"]->setMatrix("matView", trans.view);
-    //    m_shaders["trajectory"]->setMatrix("matProjection", trans.projection);
+    if(!m_trajectories->isEmpty()){
+        //m_shaders["trajectory"]->bind();
+        //    m_shaders["trajectory"]->setMatrix("matView", trans.view);
+        //    m_shaders["trajectory"]->setMatrix("matProjection", trans.projection);
 
-    //    m_trajectories->render(m_shaders["trajectory"]);
- 
-    //m_shaders["trajectory"]->release();
-
+        //    m_trajectories->render(m_shaders["trajectory"]);
+     
+        //m_shaders["trajectory"]->release();
+    }
+    
     // Render OpenStreetMap
-    //m_shaders["default"]->bind();
-    //    m_shaders["default"]->setMatrix("matView", trans.view);
-    //    m_shaders["default"]->setMatrix("matProjection", trans.projection);
+    if(!m_osmMap->isEmpty()) { 
+        m_shaders["default"]->bind();
+            m_shaders["default"]->setMatrix("matView", trans.view);
+            m_shaders["default"]->setMatrix("matProjection", trans.projection);
 
-    //    m_osmMap->render(m_shaders["default"]);
-    //m_shaders["default"]->release();
+            m_osmMap->render(m_shaders["default"]);
+        m_shaders["default"]->release();      
+    } 
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
@@ -177,8 +189,8 @@ void Scene::update(float delta)
 }
 
 void Scene::updateDrawingData(){
-    m_trajectories->prepareForVisualization();
-    m_osmMap->prepareForVisualization();
+    m_trajectories->prepareForRendering();
+    m_osmMap->prepareForRendering();
 }
 
 void Scene::select(const Transform &trans, int sw, int sh, int mx, int my)

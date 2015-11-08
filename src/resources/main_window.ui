@@ -1341,7 +1341,15 @@
     </property>
     <addaction name="separator"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionExtract_Trajectories"/>
+    <addaction name="actionSave_Trajectories"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuTools"/>
   </widget>
   <action name="actionSetWorkspace">
    <property name="text">
@@ -1466,6 +1474,16 @@
   <action name="actionClearAll">
    <property name="text">
     <string>ClearAll</string>
+   </property>
+  </action>
+  <action name="actionExtract_Trajectories">
+   <property name="text">
+    <string>Extract Trajectories</string>
+   </property>
+  </action>
+  <action name="actionSave_Trajectories">
+   <property name="text">
+    <string>Save Trajectories</string>
    </property>
   </action>
  </widget>

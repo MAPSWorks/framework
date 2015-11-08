@@ -33,16 +33,24 @@ class Trajectories {
         // IO
         bool load(const string& filename);
         bool save(const string& filename);
+
+        // Extract from files
+        // boundbox: (min_easting, max_easting, min_northing, max_northing)
+        bool extractFromMultipleFiles(const QStringList& filenames,
+                                      Eigen::Vector4f    boundbox,
+                                      int                minNumPt = 3);
         
         // Rendering
         void render(Shader* shader);
-        void prepareForVisualization();
+        void prepareForRendering();
         void updatePointVBO();
         void updateAnimateVBO();
         void update(float delta); // delta in milliseconds
 
         // Clear data
         void clear();
+
+        bool isEmpty();
 
     public:
         // Data that can be accessible from outside
@@ -84,7 +92,6 @@ class Trajectories {
 
         // Rendering
         DrawMode                                 m_renderMode;
-        bool                                     m_dataUpdated;
         unique_ptr<VertexBufferObjectAttribs>    m_pointVBO;
         unique_ptr<VertexBufferObjectAttribs>    m_animateVBO;
 

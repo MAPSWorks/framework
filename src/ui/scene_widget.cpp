@@ -34,10 +34,12 @@ SceneWidget::SceneWidget(QWidget* parent)
 
     // Double click menu
     m_doubleClickMenu->addAction("Load Trajectories", this, SLOT(slotLoadTrajectories()));
-    m_doubleClickMenu->addAction("Save Trajetories", this, SLOT(slotSaveTrajectories()));
 
     m_doubleClickMenu->addSeparator();
     m_doubleClickMenu->addAction("Open OpenStreetMap", this, SLOT(slotLoadOpenStreetMap()));
+
+    m_doubleClickMenu->addSeparator();
+    m_doubleClickMenu->addAction("Clear", this, SLOT(slotClear()));
 }
 
 SceneWidget::~SceneWidget(){
@@ -77,7 +79,17 @@ void SceneWidget::slotLoadTrajectories(){
 }
 
 void SceneWidget::slotSaveTrajectories(){
-
+    m_openingFile = true;
+    MainWindow& main_window = MainWindow::getInstance();
+    
+    QString filename = QFileDialog::getSaveFileName(&main_window, "Save Trajectories",
+                                                    main_window.getWorkspace().c_str(), "Trajectories (*.pbf)");
+    if (filename.isEmpty())
+        return;
+    
+    m_scene->m_trajectories->save(filename.toStdString());
+    
+    m_openingFile = false;
 }
 
 void SceneWidget::slotLoadOpenStreetMap(){
@@ -94,6 +106,42 @@ void SceneWidget::slotLoadOpenStreetMap(){
         update();
     }
     m_openingFile = false;
+}
+
+void SceneWidget::slotExtractTrajectories(){
+    m_openingFile = true; // Turn off display updating
+
+    MainWindow& main_window = MainWindow::getInstance();
+
+    if (m_scene->m_osmMap->isEmpty()){
+        QMessageBox msgBox;
+        msgBox.setText("Please load an openstreetmap first.");
+        msgBox.exec();
+        return;
+    }
+    
+    QStringList filenames = QFileDialog::getOpenFileNames(&main_window, 
+                                            "Open Trajectories",
+                                            main_window.getWorkspace().c_str(),    
+                                            "Trajectories (*.pbf)");
+    if (filenames.isEmpty())
+        return;
+    
+    m_scene->m_trajectories->extractFromMultipleFiles(filenames,
+                                                      m_scene->m_osmMap->m_boundBox);
+    
+    m_openingFile = false;
+    update();
+}
+
+void SceneWidget::slotClear(){
+    if(m_scene->m_trajectories) { 
+        m_scene->m_trajectories->clear();
+    } 
+    if(m_scene->m_osmMap) { 
+        m_scene->m_osmMap->clear();
+    } 
+    params::inst()->bboxUpdated = true;
 }
 
 /*=====================================================================================
@@ -174,7 +222,6 @@ void SceneWidget::paintGL(){
 
     // This will render the scene
     m_renderer->render(m_trans);
-    
 }
 
 void SceneWidget::resizeGL(int width, int height){

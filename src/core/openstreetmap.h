@@ -48,18 +48,22 @@ class OpenStreetMap {
 
         // Rendering
         void render(Shader* shader);
-        void prepareForVisualization();
+        void prepareForRendering();
 
         // Clear data
         void clear();
 
+        bool isEmpty();
+
     public:
         // Publicly available data
-        pcl::PointCloud<MapPointType>::Ptr      m_mapPoints;
-        vector<int>                             m_pointHeading;
-        vector<graph_vertex_descriptor>         m_graphVertex;
-        pcl::search::Search<MapPointType>::Ptr  m_searchTree;
+        vector<graph_vertex_descriptor>         m_graphVertices;
         Eigen::Vector4f                         m_boundBox; // [minX, maxX, minY, maxY]
+
+        // Below is only valid after running interpolateMap()
+        pcl::PointCloud<MapPointType>::Ptr      m_mapPoints; 
+        vector<int>                             m_pointHeading;
+        pcl::search::Search<MapPointType>::Ptr  m_searchTree;
     
     private: 
         float                                   m_interpolation;

@@ -60,13 +60,13 @@ public:
         float vx = 0.0f;
         float vy = 0.0f;
         float vz = 0.0f;
-        float vw = 0.0f;
+        float vw = 1.0f;
 
         // Normal Vector
         float nx = 0.0f;
         float ny = 0.0f;
         float nz = 0.0f;
-        float nw = 0.0f;
+        float nw = 1.0f;
 
         // Color
         float cx = 1.0f;
@@ -78,7 +78,7 @@ public:
         float tx = 0.0f;
         float ty = 0.0f;
         float tz = 0.0f; 
-        float tw = 0.0f;
+        float tw = 1.0f;
     };
 
 public:

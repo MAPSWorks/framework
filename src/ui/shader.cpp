@@ -153,7 +153,7 @@ void Shader::attachVertexShader(const char *fileName)
             m_vertProg = compile(source, GL_VERTEX_SHADER);
             glAttachShader(m_id, m_vertProg);
 
-            std::cout << "\tSHADER::attachVertexShader(): attached:     " << fileName << std::endl;
+            //std::cout << "\tSHADER::attachVertexShader(): attached:     " << fileName << std::endl;
         }
         else
         {
@@ -174,7 +174,7 @@ void Shader::attachControlShader(const char *fileName)
             m_contProg = compile(source, GL_TESS_CONTROL_SHADER);
             glAttachShader(m_id, m_contProg);
 
-            std::cout << "\tSHADER::attachControlShader(): attached:    " << fileName << std::endl;
+            //std::cout << "\tSHADER::attachControlShader(): attached:    " << fileName << std::endl;
         }
         else
         {
@@ -196,7 +196,7 @@ void Shader::attachEvaluationShader(const char *fileName)
             m_evalProg = compile(source, GL_TESS_EVALUATION_SHADER);
             glAttachShader(m_id, m_evalProg);
 
-            std::cout << "\tSHADER::attachEvaluationShader(): attached:" << fileName << std::endl;
+            //std::cout << "\tSHADER::attachEvaluationShader(): attached:" << fileName << std::endl;
         }
         else
         {
@@ -218,7 +218,7 @@ void Shader::attachGeometryShader(const char *fileName)
             m_geomProg = compile(source, GL_GEOMETRY_SHADER);
             glAttachShader(m_id, m_geomProg);
 
-            std::cout << "\tSHADER::attachGeometryShader(): attached:  " << fileName << std::endl;
+            //std::cout << "\tSHADER::attachGeometryShader(): attached:  " << fileName << std::endl;
         }
         else
         {
@@ -239,7 +239,7 @@ void Shader::attachFragmentShader(const char *fileName)
             m_fragProg = compile(source, GL_FRAGMENT_SHADER);
             glAttachShader(m_id, m_fragProg);
 
-            std::cout << "\tSHADER::attachFragmentShader(): attached:  " << fileName << std::endl;
+            //std::cout << "\tSHADER::attachFragmentShader(): attached:  " << fileName << std::endl;
         }
         else
         {

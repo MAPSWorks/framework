@@ -66,6 +66,10 @@ void MainWindow::init(void)
     
     connect(this, SIGNAL(showInformationRequested(const QString&)), this, SLOT(slotShowInformation(const QString&)));
 
+    // Tools
+    connect(ui_->actionExtract_Trajectories, SIGNAL(triggered()), ui_->scene_widget, SLOT(slotExtractTrajectories()));
+    connect(ui_->actionSave_Trajectories, SIGNAL(triggered()), ui_->scene_widget, SLOT(slotSaveTrajectories()));
+
     loadSettings();
     
     return;

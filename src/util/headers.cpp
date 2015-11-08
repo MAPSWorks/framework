@@ -17,6 +17,8 @@ void updateBBOX(float minX, float maxX,
                 float minZ, float maxZ){
     glm::vec3& minBBOX = params::inst()->minBBOX;
     glm::vec3& maxBBOX = params::inst()->maxBBOX;
+
+    params::inst()->bboxUpdated = true;
     if(minBBOX.x > minX) { 
         minBBOX.x = minX;
     } 
