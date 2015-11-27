@@ -12,11 +12,8 @@ CameraManager::CameraManager()
       m_fcp(1000.0f),
       m_rotHeight(-1.0f),
       m_rotate(20.0f, 0.0f, 0.0f),
-      m_translate(0.0f, 0.0f, 0.0f),
-      m_zoom(-50.0f),
-      m_orthoZoomTransX(0.0f),
-      m_orthoZoomTransY(0.0f),
-      m_orthoZoomMax(100.0f),
+      m_translate(0.0f, 0.0f, -150.0f),
+      m_zoomTrans(0.0f, 0.0f, 0.0f),
       m_mouseSensitivity(0.1f),
       m_camSpeed(10.0f),
       m_useCam(false),
@@ -59,22 +56,24 @@ void CameraManager::resize(float width, float height){
 void CameraManager::toggleCameraMode(){
     if(m_conf == PERSPECTIVE) { 
         m_conf = ORTHOGONAL; 
+        cout << "Now using orthogonal camera." << endl;
     }  
     else{
         m_conf = PERSPECTIVE;
+        cout << "Now using perspective camera." << endl;
     }
 }
 
 void CameraManager::computeViewProjection(){
     if (m_conf == PERSPECTIVE) { 
         // Perspective Camera
-        m_projection = glm::perspective(m_fov, m_aspect, m_ncp, m_fcp);    
+        m_projection = glm::perspective(glm::radians(m_fov), m_aspect, m_ncp, m_fcp);    
         m_view = glm::mat4(1.0f);
 
         // Translation
         m_view = glm::translate(m_view, glm::vec3(0.0f, m_rotHeight, 0.0f));
-        m_view = glm::translate(m_view, glm::vec3(0.0f, 0.0f, m_zoom));
         m_view = glm::translate(m_view, m_translate);
+        m_view = glm::translate(m_view, m_zoomTrans);
 
         // Rotation
         m_view = glm::rotate(m_view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -83,31 +82,26 @@ void CameraManager::computeViewProjection(){
     else{
         // Orthogonal Camera
         float orthoWidth, orthoHeight;
-        if(m_zoom < 1.0f) { 
-           orthoWidth = m_width * (2.0f - m_zoom); 
-           orthoHeight = m_height * (2.0f - m_zoom); 
-        } 
-        else{
-           orthoWidth = m_width / m_zoom; 
-           orthoHeight = m_height / m_zoom; 
-        }
+        orthoWidth = m_width * abs(m_translate.z);
+        orthoHeight = m_height * abs(m_translate.z);
 
-        float orthoLeft   = (m_orthoZoomTransX - orthoWidth/2.0f) * m_aspect;
-        float orthoRight  = (m_orthoZoomTransX + orthoWidth/2.0f) * m_aspect;
-        float orthoBottom = m_orthoZoomTransY - orthoHeight/2.0f;
-        float orthoTop    = m_orthoZoomTransY + orthoHeight/2.0f;
+        float orthoLeft   =  - orthoWidth / 2.0f * m_aspect;
+        float orthoRight  = orthoWidth /2.0f * m_aspect;
+        float orthoBottom = - orthoHeight/2.0f;
+        float orthoTop    = orthoHeight/2.0f;
         
         m_projection = glm::ortho(orthoLeft,
-                                          orthoRight,
-                                          orthoBottom,
-                                          orthoTop,
-                                          -m_fcp,
-                                          m_fcp);
+                                  orthoRight,
+                                  orthoBottom,
+                                  orthoTop,
+                                  -m_fcp,
+                                  m_fcp);
 
         m_view = glm::mat4(1.0f);
         
         m_view = glm::translate(m_view, glm::vec3(0.0f, m_rotHeight, 0.0f));
-        m_view = glm::translate(m_view, glm::vec3(0.0f, 0.0f, m_zoom));
+        m_view = glm::translate(m_view, m_translate);
+        m_view = glm::translate(m_view, m_zoomTrans);
        
         m_view = glm::rotate(m_view, glm::radians(m_rotate.x), glm::vec3(1.0f, 0.0f, 0.0f));
         m_view = glm::rotate(m_view, glm::radians(m_rotate.y), glm::vec3(0.0f, 1.0f, 0.0f)); 
@@ -143,79 +137,60 @@ void CameraManager::changeRotHeight(float delta) {
 // button = 0: left button
 // button = 1: right button
 void CameraManager::onMouseMove(float dx, float dy, int button){
-    if (button == 0) { 
-        if (m_useCam) { 
-            m_cameras[m_active]->changeHeading(m_mouseSensitivity * dx);
-            m_cameras[m_active]->changePitch(m_mouseSensitivity * dy);
-        } 
-        else{
-            m_rotate.y -= (m_mouseSensitivity * dx);
-            m_rotate.x -= (m_mouseSensitivity * dy);
-        }
-    } 
-    else{
+    float r = clamp(abs(500.0 + m_translate.z) / 150.0f, 1.0f, 5.0f);
+    if (button == 1) { 
+        // Left button
         if(m_useCam) { 
                 
         } 
         else{
             m_translate.x += (m_mouseSensitivity * dx); 
-            m_translate.y += (m_mouseSensitivity * dy); 
+            m_translate.y -= (m_mouseSensitivity * dy); 
+        } 
+    } 
+    else{
+        // Right button
+        if (m_useCam) { 
+            m_cameras[m_active]->changeHeading(m_mouseSensitivity * dx / r);
+            m_cameras[m_active]->changePitch(m_mouseSensitivity * dy / r);
+        } 
+        else{
+            m_rotate.y -= (m_mouseSensitivity * dx / r);
+            m_rotate.x -= (m_mouseSensitivity * dy / r);
         }
     }
 }
 
-void CameraManager::onMouseWheel(int dir,
+void CameraManager::onMouseWheel(int yoffset,
                                  double tx,
                                  double ty){
-    float delta = abs(m_zoom) * 0.01 * abs(dir);
+    float delta = abs(m_translate.z) * 0.01 * abs(yoffset);
     if(delta < 0.1) { 
         delta = 0.1; 
     } 
 
-    float prev_zoom = m_zoom;
+    float old_trans_z = m_translate.z;
+    float new_trans_z = m_translate.z;
 
-    float max_zoom = 800.0f;
-    if (dir > 0) { 
-        m_zoom += delta;
-        if(m_zoom > 1.0) { 
-            m_zoom = 1.0; 
+    float max_zoom = 500.0f;
+    if (yoffset > 0) { 
+        new_trans_z += delta;
+        if(new_trans_z > 1.0) { 
+            new_trans_z = 1.0; 
         } 
     }
     else{
-        m_zoom -= delta;
-        if(m_zoom < -max_zoom) { 
-            m_zoom = -max_zoom; 
+        new_trans_z -= delta;
+        if(new_trans_z < -max_zoom) { 
+            new_trans_z = -max_zoom; 
         } 
     }
+    m_translate.z = new_trans_z;
 
-    if(m_conf == ORTHOGONAL) { 
-        float prevOrthoWidth, prevOrthoHeight;
-        if(m_zoom < 1.0f) { 
-           prevOrthoWidth = m_width * (2.0f - prev_zoom); 
-           prevOrthoHeight = m_height * (2.0f - prev_zoom); 
-        } 
-        else{
-           prevOrthoWidth = m_width / prev_zoom; 
-           prevOrthoHeight = m_width / prev_zoom; 
-        }
-        double prex = tx * prevOrthoWidth;
-        double prey = ty * prevOrthoHeight;
-
-        float orthoWidth, orthoHeight;
-        if(m_zoom < 1.0f) { 
-           orthoWidth = m_width * (2.0f - m_zoom); 
-           orthoHeight = m_height * (2.0f - m_zoom); 
-        } 
-        else{
-           orthoWidth = m_width / m_zoom; 
-           orthoHeight = m_height / m_zoom; 
-        } 
-        double postx = tx * orthoWidth;
-        double posty = ty * orthoHeight;
-
-        m_orthoZoomTransX += (prex - postx);
-        m_orthoZoomTransY += (prey - posty);
-    } 
+    float delta_x = -(new_trans_z - old_trans_z) * tx * m_aspect;
+    float delta_y = -(new_trans_z - old_trans_z) * ty;
+    m_zoomTrans.x += delta_x;
+    m_zoomTrans.y += delta_y;      
 }
 
 void CameraManager::onKeyPress(int keyId){

@@ -4,7 +4,7 @@
 #include "headers.h"
 
 class Shader;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class Object
 {
@@ -37,8 +37,8 @@ private:
 public:
     QString                             m_fileName;
     
-    vector<VertexBufferObjectAttribs *> m_vbosTriangles;
-    vector<VertexBufferObjectAttribs *> m_vbosLines;
+    vector<RenderableObject *>          m_vbosTriangles;
+    vector<RenderableObject *>          m_vbosLines;
 
     int                                 m_nrTriangles;
     int                                 m_nrVertices;

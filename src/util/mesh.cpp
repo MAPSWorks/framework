@@ -1,5 +1,5 @@
 #include "mesh.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 #include "model_loader_obj.h"
 
 Mesh::Mesh()
@@ -10,9 +10,9 @@ Mesh::~Mesh()
 {
 }
 
-vector<VertexBufferObjectAttribs *> Mesh::obj(const QString &fileName, const glm::vec3 &rot, const glm::vec3 &scale, GLenum primitive)
+vector<RenderableObject *> Mesh::obj(const QString &fileName, const glm::vec3 &rot, const glm::vec3 &scale, GLenum primitive)
 {
-    vector<VertexBufferObjectAttribs *> vbos;
+    vector<RenderableObject *> vbos;
 
     ModelOBJ *model = new ModelOBJ();
     std::vector<glm::vec3> tempVertices;	
@@ -56,49 +56,26 @@ vector<VertexBufferObjectAttribs *> Mesh::obj(const QString &fileName, const glm
         glm::vec3 mi(math_maxfloat, math_maxfloat, math_maxfloat);
         glm::vec3 ma(math_minfloat, math_minfloat, math_minfloat);
 
-        VertexBufferObjectAttribs::DATA *data = new VertexBufferObjectAttribs::DATA[tempVertices.size()];
+        vector<RenderableObject::Vertex> data(tempVertices.size());
 
         for(uint i=0; i<tempVertices.size(); ++i)
         {
-            VertexBufferObjectAttribs::DATA d;
+            RenderableObject::Vertex d;
 
             glm::vec3 v = tempVertices[i];
             glm::vec3 n = tmpNormals[i];
             glm::vec3 t = tmpTexCoords[i];
 
-            d.vx = v.x;
-            d.vy = v.y;
-            d.vz = v.z;
-            d.vw = 1.0f;
-
-            d.cx = 1.0f;
-            d.cy = 0.0f;
-            d.cz = 0.0f;
-            d.cw = 1.0;
-
-            d.nx = n.x;
-            d.ny = n.y;
-            d.nz = n.z;
-            d.nw = 1.0f;
-
-            d.tx = t.x;
-            d.ty = t.y;
-            d.tz = 0.0f;
-            d.tw = 1.0f;
-
+            d.Position = v;
+            d.Color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+            d.Normal = n;
+            
+            d.TexCoords = glm::vec2(t.x, t.y);
             data[i] = d;
         }
 
-        VertexBufferObjectAttribs* vboMesh = new VertexBufferObjectAttribs();
-        vboMesh->setData(data, GL_STATIC_DRAW, tempVertices.size(), primitive); 
-
-        vboMesh->addAttrib(VERTEX_POSITION);
-        vboMesh->addAttrib(VERTEX_NORMAL);
-        vboMesh->addAttrib(VERTEX_COLOR);
-        vboMesh->addAttrib(VERTEX_TEXTURE);
-        vboMesh->bindAttribs();
-
-        delete[] data;
+        RenderableObject* vboMesh = new RenderableObject();
+        vboMesh->setData(data, primitive); 
 
         vbos.push_back(vboMesh);
     }
@@ -106,9 +83,9 @@ vector<VertexBufferObjectAttribs *> Mesh::obj(const QString &fileName, const glm
     return vbos;
 }
 
-vector<VertexBufferObjectAttribs*> loadObj(QString fileName)
+vector<RenderableObject*> loadObj(QString fileName)
 {
-    vector <VertexBufferObjectAttribs*> vbos;
+    vector <RenderableObject*> vbos;
 
     ModelOBJ *model = new ModelOBJ();
     std::vector<glm::vec3> tempVertices;
@@ -153,48 +130,25 @@ vector<VertexBufferObjectAttribs*> loadObj(QString fileName)
             tmpTexCoords.push_back(t);
         }
 
-        VertexBufferObjectAttribs::DATA *data = new VertexBufferObjectAttribs::DATA[tempVertices.size()];
+        vector<RenderableObject::Vertex> data(tempVertices.size());
 
         for (uint i = 0; i<tempVertices.size(); ++i)
         {
-            VertexBufferObjectAttribs::DATA d;
+            RenderableObject::Vertex d;
             glm::vec3 pos = tempVertices[i];
             glm::vec3 n = tmpNormals[i];
             glm::vec3 t = tmpTexCoords[i];
 
-            d.vx = pos.x;
-            d.vy = pos.y;
-            d.vz = pos.z;
-            d.vw = 1.0f;
-
-            d.cx = 1.0f;
-            d.cy = 0.0f;
-            d.cz = 0.0f;
-            d.cw = 1.0;
-
-            d.nx = n.x;
-            d.ny = n.y;
-            d.nz = n.z;
-            d.nw = 1.0f;
-
-            d.tx = t.x;
-            d.ty = t.y;
-            d.tz = 0.0f;
-            d.tw = 1.0f;
+            d.Position = pos;
+            d.Color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+            d.Normal = n;
+            d.TexCoords = glm::vec2(t.x, t.y);
 
             data[i] = d;
         }
 
-        VertexBufferObjectAttribs* vboMesh = new VertexBufferObjectAttribs();
-        vboMesh->setData(data, GL_STATIC_DRAW, tempVertices.size(), GL_TRIANGLES);
-
-        vboMesh->addAttrib(VERTEX_POSITION);
-        vboMesh->addAttrib(VERTEX_NORMAL);
-        vboMesh->addAttrib(VERTEX_COLOR);
-        vboMesh->addAttrib(VERTEX_TEXTURE);
-        vboMesh->bindAttribs();
-
-        delete[] data;
+        RenderableObject* vboMesh = new RenderableObject();
+        vboMesh->setData(data, GL_TRIANGLES);
 
         vbos.push_back(vboMesh);
     }
@@ -202,7 +156,7 @@ vector<VertexBufferObjectAttribs*> loadObj(QString fileName)
     return vbos;
 }
 
-VertexBufferObjectAttribs *Mesh::quadLines(int startX, int startY, int width, int height, const glm::vec4 &color)
+RenderableObject *Mesh::quadLines(int startX, int startY, int width, int height, const glm::vec4 &color)
 {
     glm::vec3 mi(startX, startY, 0.0f);
     glm::vec3 ma(startX + width, startY + height, 0.0f);
@@ -226,48 +180,23 @@ VertexBufferObjectAttribs *Mesh::quadLines(int startX, int startY, int width, in
     vertices.push_back(glm::vec3(mi.x, mi.y, d));
 
     uint nrVertices = vertices.size();
-    VertexBufferObjectAttribs::DATA *attrData = new VertexBufferObjectAttribs::DATA[nrVertices];
+    vector<RenderableObject::Vertex> attrData(nrVertices);
 
     for(uint i=0; i<nrVertices; ++i)
     {    
         glm::vec3 v = vertices[i];
 
-        attrData[i].vx = v.x;
-        attrData[i].vy = v.y;
-        attrData[i].vz = v.z;
-        attrData[i].vw = 1.0f;
-
-        attrData[i].nx = 0.0f;
-        attrData[i].ny = 0.0f;
-        attrData[i].nz = 0.0f;
-        attrData[i].nw = 0.0f;
-
-        attrData[i].cx = color.x;
-        attrData[i].cy = color.y;
-        attrData[i].cz = color.z;
-        attrData[i].cw = color.w;
-
-        attrData[i].tx = 0.0f;
-        attrData[i].ty = 0.0f;
-        attrData[i].tz = 0.0f;
-        attrData[i].tw = 0.0f;
+        attrData[i].Position = v;
+        attrData[i].Color = color;
     }
 
-    VertexBufferObjectAttribs *vbo = new VertexBufferObjectAttribs();
-    vbo->setData(attrData, GL_STATIC_DRAW, nrVertices, GL_LINES);
-
-    vbo->addAttrib(VERTEX_POSITION);
-    vbo->addAttrib(VERTEX_NORMAL);
-    vbo->addAttrib(VERTEX_COLOR);
-    vbo->addAttrib(VERTEX_TEXTURE);
-    vbo->bindAttribs();
-
-    delete[] attrData;    
+    RenderableObject *vbo = new RenderableObject();
+    vbo->setData(attrData, GL_LINES);
 
     return vbo;
 }
 
-VertexBufferObjectAttribs *Mesh::quad(int startX, int startY, int width, int height, const glm::vec4 &color, GLenum primitive)
+RenderableObject *Mesh::quad(int startX, int startY, int width, int height, const glm::vec4 &color, GLenum primitive)
 {
     glm::vec3 mi(startX, startY, 0.0f);
     glm::vec3 ma(startX + width, startY + height, 0.0f);
@@ -300,7 +229,7 @@ VertexBufferObjectAttribs *Mesh::quad(int startX, int startY, int width, int hei
     };
 
     uint nrVertices = vertices.size();
-    VertexBufferObjectAttribs::DATA *attrData = new VertexBufferObjectAttribs::DATA[nrVertices];
+    vector<RenderableObject::Vertex> attrData(nrVertices);
 
     for(uint i=0; i<nrVertices; ++i)
     {    
@@ -308,43 +237,19 @@ VertexBufferObjectAttribs *Mesh::quad(int startX, int startY, int width, int hei
         glm::vec3 n = normals[i];
         glm::vec3 t = texCoords[i];
 
-        attrData[i].vx = v.x;
-        attrData[i].vy = v.y;
-        attrData[i].vz = v.z;
-        attrData[i].vw = 1.0f;
-
-        attrData[i].nx = n.x;
-        attrData[i].ny = n.y;
-        attrData[i].nz = n.z;
-        attrData[i].nw = 0.0f;
-
-        attrData[i].cx = color.x;
-        attrData[i].cy = color.y;
-        attrData[i].cz = color.z;
-        attrData[i].cw = color.w;
-
-        attrData[i].tx = t.x;
-        attrData[i].ty = t.y;
-        attrData[i].tz = 0.0f;
-        attrData[i].tw = 0.0f;
+        attrData[i].Position = v;
+        attrData[i].Normal = n;
+        attrData[i].Color = color;
+        attrData[i].TexCoords = glm::vec2(t.x, t.y);
     }
 
-    VertexBufferObjectAttribs *vbo = new VertexBufferObjectAttribs();
-    vbo->setData(attrData, GL_STATIC_DRAW, nrVertices, primitive);
-    vbo->setIndexData(&indices[0], GL_STATIC_DRAW, indices.size());
-
-    vbo->addAttrib(VERTEX_POSITION);
-    vbo->addAttrib(VERTEX_NORMAL);
-    vbo->addAttrib(VERTEX_COLOR);
-    vbo->addAttrib(VERTEX_TEXTURE);
-    vbo->bindAttribs();
-
-    delete[] attrData;    
+    RenderableObject *vbo = new RenderableObject();
+    vbo->setData(attrData, indices, primitive);
 
     return vbo;
 }
 
-VertexBufferObjectAttribs *Mesh::quad(int width, int height, const glm::vec4 &color, GLenum primitive)
+RenderableObject *Mesh::quad(int width, int height, const glm::vec4 &color, GLenum primitive)
 {
     glm::vec3 mi(-width/2.0f, -height/2.0f, 0.0f);
     glm::vec3 ma(width/2.0f, height/2.0f, 0.0f);
@@ -375,7 +280,7 @@ VertexBufferObjectAttribs *Mesh::quad(int width, int height, const glm::vec4 &co
     };
 
     uint nrVertices = vertices.size();
-    VertexBufferObjectAttribs::DATA *attrData = new VertexBufferObjectAttribs::DATA[nrVertices];
+    vector<RenderableObject::Vertex> attrData(nrVertices);
 
     for(uint i=0; i<nrVertices; ++i)
     {    
@@ -383,43 +288,19 @@ VertexBufferObjectAttribs *Mesh::quad(int width, int height, const glm::vec4 &co
         glm::vec3 n = normals[i];
         glm::vec3 t = texCoords[i];
 
-        attrData[i].vx = v.x;
-        attrData[i].vy = v.y;
-        attrData[i].vz = v.z;
-        attrData[i].vw = 1.0f;
-
-        attrData[i].nx = n.x;
-        attrData[i].ny = n.y;
-        attrData[i].nz = n.z;
-        attrData[i].nw = 0.0f;
-
-        attrData[i].cx = color.x;
-        attrData[i].cy = color.y;
-        attrData[i].cz = color.z;
-        attrData[i].cw = color.w;
-
-        attrData[i].tx = t.x;
-        attrData[i].ty = t.y;
-        attrData[i].tz = 0.0f;
-        attrData[i].tw = 0.0f;
+        attrData[i].Position = v;
+        attrData[i].Normal = n;
+        attrData[i].Color = color;
+        attrData[i].TexCoords = glm::vec2(t.x, t.y);
     }
 
-    VertexBufferObjectAttribs *vbo = new VertexBufferObjectAttribs();
-    vbo->setData(attrData, GL_STATIC_DRAW, nrVertices, primitive);
-    vbo->setIndexData(&indices[0], GL_STATIC_DRAW, indices.size());
-
-    vbo->addAttrib(VERTEX_POSITION);
-    vbo->addAttrib(VERTEX_NORMAL);
-    vbo->addAttrib(VERTEX_COLOR);
-    vbo->addAttrib(VERTEX_TEXTURE);
-    vbo->bindAttribs();
-
-    delete[] attrData;    
+    RenderableObject *vbo = new RenderableObject();
+    vbo->setData(attrData, indices, primitive);
 
     return vbo;
 }
 
-VertexBufferObjectAttribs *Mesh::box(const glm::vec3 &mi, const glm::vec3 &ma, const glm::vec4 &color, GLenum primitive)
+RenderableObject *Mesh::box(const glm::vec3 &mi, const glm::vec3 &ma, const glm::vec4 &color, GLenum primitive)
 {
     vector<glm::vec3> vertices;
     vector<glm::vec3> normals;
@@ -503,50 +384,25 @@ VertexBufferObjectAttribs *Mesh::box(const glm::vec3 &mi, const glm::vec3 &ma, c
     };
 
     uint nrVertices = vertices.size();
-    VertexBufferObjectAttribs::DATA *attrData = new VertexBufferObjectAttribs::DATA[nrVertices];
+    vector<RenderableObject::Vertex> attrData(nrVertices);
 
     for(uint i=0; i<nrVertices; ++i)
     {    
         glm::vec3 v = vertices[i];
         glm::vec3 n = normals[i];
 
-        attrData[i].vx = v.x;
-        attrData[i].vy = v.y;
-        attrData[i].vz = v.z;
-        attrData[i].vw = 1.0f;
-
-        attrData[i].nx = n.x;
-        attrData[i].ny = n.y;
-        attrData[i].nz = n.z;
-        attrData[i].nw = 0.0f;
-
-        attrData[i].cx = color.x;
-        attrData[i].cy = color.y;
-        attrData[i].cz = color.z;
-        attrData[i].cw = color.w;
-
-        attrData[i].tx = 0.0f;
-        attrData[i].ty = 0.0f;
-        attrData[i].tz = 0.0f;
-        attrData[i].tw = 0.0f;
+        attrData[i].Position = v;
+        attrData[i].Normal = n;
+        attrData[i].Color = color;
     }
 
-    VertexBufferObjectAttribs *vbo = new VertexBufferObjectAttribs();
-    vbo->setData(attrData, GL_STATIC_DRAW, nrVertices, primitive);
-    vbo->setIndexData(&indices[0], GL_STATIC_DRAW, indices.size());
-
-    vbo->addAttrib(VERTEX_POSITION);
-    vbo->addAttrib(VERTEX_NORMAL);
-    vbo->addAttrib(VERTEX_COLOR);
-    vbo->addAttrib(VERTEX_TEXTURE);
-    vbo->bindAttribs();
-
-    delete[] attrData;    
+    RenderableObject *vbo = new RenderableObject();
+    vbo->setData(attrData, indices, primitive);
 
     return vbo;
 }
 
-VertexBufferObjectAttribs *Mesh::sphere(float radius, int iterations, const glm::vec4 &color, GLenum primitive)
+RenderableObject *Mesh::sphere(float radius, int iterations, const glm::vec4 &color, GLenum primitive)
 {
     FACET3 *f = new FACET3[(int)pow(4.0, iterations)];
     int n = CreateUnitSphere(f, iterations);
@@ -571,44 +427,20 @@ VertexBufferObjectAttribs *Mesh::sphere(float radius, int iterations, const glm:
     }
 
     uint nrVertices = vertices.size();
-    VertexBufferObjectAttribs::DATA *attrData = new VertexBufferObjectAttribs::DATA[nrVertices];
+    vector<RenderableObject::Vertex> attrData(nrVertices);
 
     for(uint i=0; i<nrVertices; ++i)
     {    
         glm::vec3 v = vertices[i];
         glm::vec3 n = normals[i];
 
-        attrData[i].vx = v.x;
-        attrData[i].vy = v.y;
-        attrData[i].vz = v.z;
-        attrData[i].vw = 1.0f;
-
-        attrData[i].nx = n.x;
-        attrData[i].ny = n.y;
-        attrData[i].nz = n.z;
-        attrData[i].nw = 0.0f;
-
-        attrData[i].cx = color.x;
-        attrData[i].cy = color.y;
-        attrData[i].cz = color.z;
-        attrData[i].cw = color.w;
-
-        attrData[i].tx = 0.0f;
-        attrData[i].ty = 0.0f;
-        attrData[i].tz = 0.0f;
-        attrData[i].tw = 0.0f;
+        attrData[i].Position = v;
+        attrData[i].Normal = n;
+        attrData[i].Color = color;
     }
 
-    VertexBufferObjectAttribs *vbo = new VertexBufferObjectAttribs();
-    vbo->setData(attrData, GL_STATIC_DRAW, nrVertices, primitive);
-
-    vbo->addAttrib(VERTEX_POSITION);
-    vbo->addAttrib(VERTEX_NORMAL);
-    vbo->addAttrib(VERTEX_COLOR);
-    vbo->addAttrib(VERTEX_TEXTURE);
-    vbo->bindAttribs();
-
-    delete[] attrData;    
+    RenderableObject *vbo = new RenderableObject();
+    vbo->setData(attrData, primitive);
 
     return vbo;
 }

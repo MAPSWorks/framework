@@ -19,7 +19,7 @@
 #include <Eigen/Dense> 
 
 class Shader;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 enum WayType{
     MOTORWAY = 0,
@@ -76,8 +76,8 @@ class OpenStreetMap {
 
         // Rendering
         bool                                    m_dataUpdated;
-        unique_ptr<VertexBufferObjectAttribs>   m_pointVBO;
-        unique_ptr<VertexBufferObjectAttribs>   m_lineVBO;
+        unique_ptr<RenderableObject>   m_pointVBO;
+        unique_ptr<RenderableObject>   m_lineVBO;
 }; 
 
 #endif /* end of include guard: OPENSTREETMAP_H_K3GWYIMN */

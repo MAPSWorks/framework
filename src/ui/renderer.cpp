@@ -1,7 +1,7 @@
 #include "renderer.h"
 #include "camera_manager.h"
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 #include "scene.h"
 #include "mesh.h"
 #include "light.h"

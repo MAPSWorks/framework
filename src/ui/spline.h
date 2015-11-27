@@ -11,7 +11,7 @@ Created by Chen Chen on 09/28/2015
 #include "headers.h"
 
 class Shader;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class Spline
 {
@@ -59,7 +59,7 @@ class Spline
         Config m_config;
 
         Shader                    *m_shader;
-        VertexBufferObjectAttribs *m_vbo;
+        RenderableObject *m_vbo;
         float                     m_ptSize;
 };
 

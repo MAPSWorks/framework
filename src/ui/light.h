@@ -5,7 +5,7 @@
 #include "spline.h"
 
 class CameraManager;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 class Shader;
 class FrameBufferObject;
 class Scene;
@@ -67,8 +67,8 @@ class Light
 
         glm::vec3                 m_oldPosition;
 
-        VertexBufferObjectAttribs *m_vbo;       // Draw light as a sphere
-        VertexBufferObjectAttribs *m_vboBlur;   // Quad for shadow mapping
+        RenderableObject          *m_vbo;       // Draw light as a sphere
+        RenderableObject          *m_vboBlur;   // Quad for shadow mapping
 
     public:
         FrameBufferObject         *m_fboLight;

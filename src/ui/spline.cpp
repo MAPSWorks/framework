@@ -1,7 +1,7 @@
 #include "spline.h"
 #include "color.h"
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 
 Spline::Spline(Config conf) 
 : m_config(conf),
@@ -11,11 +11,7 @@ Spline::Spline(Config conf)
     m_ptSize(8.0f)
 {
     m_shader = new Shader("../shader/Spline.vert.glsl", "../shader/Spline.frag.glsl");
-    m_vbo    = new VertexBufferObjectAttribs();
-    m_vbo->addAttrib(VERTEX_POSITION);
-    m_vbo->addAttrib(VERTEX_NORMAL);
-    m_vbo->addAttrib(VERTEX_COLOR);
-    m_vbo->addAttrib(VERTEX_TEXTURE);
+    m_vbo    = new RenderableObject();
 }
 
 Spline::~Spline()
@@ -135,22 +131,16 @@ void Spline::render(const Transform &trans, Config conf)
     /* Small Trick Notice!
      *  - Use DATA.nx to represent the point size ratio, for example, DATA.nx = 0.5f will be half of the size of m_ptSize so I just need to transfer data once, and call glPointSize once.
      */
-    std::vector<VertexBufferObjectAttribs::DATA> data;
+    std::vector<RenderableObject::Vertex> data;
     Color pColor(0.7f, 0.7f, 0.7f);
     //Interpolated Points
     for(float f=0; f<1.0f; f+= 0.005f/m_points.size())
     {
         glm::vec3 v = interpolatedPoint(f, conf);
-        VertexBufferObjectAttribs::DATA newPt;
-        newPt.vx = v.x;
-        newPt.vy = v.y;
-        newPt.vz = v.z;
-        newPt.vw = 1.0f;
-        newPt.nx = 0.125f;
-        newPt.cx = 0.7f;
-        newPt.cy = 0.7f;
-        newPt.cz = 0.7f;
-        newPt.cw = 1.0f;
+        RenderableObject::Vertex newPt;
+        newPt.Position = v;
+        newPt.Normal   = glm::vec3(0.125f, 0.0f, 0.0f);
+        newPt.Color    = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
         data.push_back(newPt);
     }        
 
@@ -158,104 +148,58 @@ void Spline::render(const Transform &trans, Config conf)
     for(uint i=0; i<m_points.size(); ++i)
     {
         glm::vec3 v = m_points[i];
-        VertexBufferObjectAttribs::DATA newPt;
-        newPt.vx = v.x;
-        newPt.vy = v.y;
-        newPt.vz = v.z;
-        newPt.vw = 1.0f;
-        newPt.nx = 0.25f;
-        newPt.cx = 1.0f;
-        newPt.cy = 1.0f;
-        newPt.cz = 1.0f;
-        newPt.cw = 1.0f;
+        RenderableObject::Vertex newPt;
+        newPt.Position = v;
+        newPt.Normal   = glm::vec3(0.25f, 0.0f, 0.0f);
         data.push_back(newPt);
     }        
 
     //Phantom Points
-    std::vector<VertexBufferObjectAttribs::DATA> phantomPoints;
+    std::vector<RenderableObject::Vertex> phantomPoints;
     Color phantomColor(1.0f, 1.0f, 1.0f);
     float phantomPtSize = 3.0f;
 
     glm::vec3 p1 = m_phantomStart;
     glm::vec3 p2 = m_phantomEnd;
 
-    VertexBufferObjectAttribs::DATA newPt1, newPt2;
-    newPt1.vx = p1.x;
-    newPt1.vy = p1.y;
-    newPt1.vz = p1.z;
-    newPt1.vw = 1.0f;
-    newPt1.nx = 0.375f;
-    newPt1.cx = 1.0f;
-    newPt1.cy = 1.0f;
-    newPt1.cz = 1.0f;
-    newPt1.cw = 1.0f;
-    newPt2.vx = p2.x;
-    newPt2.vy = p2.y;
-    newPt2.vz = p2.z;
-    newPt2.vw = 1.0f;
-    newPt2.nx = 0.375f;
-    newPt2.cx = 1.0f;
-    newPt2.cy = 1.0f;
-    newPt2.cz = 1.0f;
-    newPt2.cw = 1.0f;
+    RenderableObject::Vertex newPt1, newPt2;
+    newPt1.Position = p1;
+    newPt1.Normal = glm::vec3(0.375f, 0.0f, 0.0f);
+    newPt2.Position = p2;
+    newPt2.Normal = glm::vec3(0.375f, 0.0f, 0.0f);
     data.push_back(newPt1);
     data.push_back(newPt2);
 
     //Start/End for Phoantom Points
-    VertexBufferObjectAttribs::DATA sPtStart, sPtEnd, tPtStart, tPtEnd;
+    RenderableObject::Vertex sPtStart, sPtEnd, tPtStart, tPtEnd;
     uint size = m_points.size() - 1;
     glm::vec3 sStart = m_points[0];
     glm::vec3 tStart = m_points[1];
     glm::vec3 sEnd   = m_points[size];
     glm::vec3 tEnd   = m_points[size-1];   
 
-    sPtStart.vx = sStart.x;
-    sPtStart.vy = sStart.y;
-    sPtStart.vz = sStart.z;
-    sPtStart.vw = 1.0f;
-    sPtStart.nx = 1.0f;
-    sPtStart.cx = 1.0f;
-    sPtStart.cy = 0.0f;
-    sPtStart.cz = 0.0f;
-    sPtStart.cw = 1.0f;
+    sPtStart.Position = sStart;
+    sPtStart.Normal   = glm::vec3(1.0f, 0.0f, 0.0f);
+    sPtStart.Color    = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
-    tPtStart.vx = tStart.x;
-    tPtStart.vy = tStart.y;
-    tPtStart.vz = tStart.z;
-    tPtStart.vw = 1.0f;
-    tPtStart.nx = 1.0f;
-    tPtStart.cx = 0.5f;
-    tPtStart.cy = 0.0f;
-    tPtStart.cz = 0.0f;
-    tPtStart.cw = 1.0f;
+    tPtStart.Position = tStart;
+    tPtStart.Normal   = glm::vec3(1.0f, 0.0f, 0.0f);
+    tPtStart.Color    = glm::vec4(0.5f, 0.0f, 0.0f, 1.0f);
 
-    sPtEnd.vx = sEnd.x;
-    sPtEnd.vy = sEnd.y;
-    sPtEnd.vz = sEnd.z;
-    sPtEnd.vw = 1.0f;
-    sPtEnd.nx = 1.0f;
-    sPtEnd.cx = 0.0f;
-    sPtEnd.cy = 0.0f;
-    sPtEnd.cz = 1.0f;
-    sPtEnd.cw = 1.0f;
+    sPtEnd.Position = sEnd;
+    sPtEnd.Normal   = glm::vec3(1.0f, 0.0f, 0.0f);
+    sPtEnd.Color    = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-    tPtEnd.vx = tEnd.x;
-    tPtEnd.vy = tEnd.y;
-    tPtEnd.vz = tEnd.z;
-    tPtEnd.vw = 1.0f;
-    tPtEnd.nx = 1.0f;
-    tPtEnd.cx = 0.0f;
-    tPtEnd.cy = 0.0f;
-    tPtEnd.cz = 0.5f;
-    tPtEnd.cw = 1.0f;
+    tPtEnd.Position = tEnd;
+    tPtEnd.Normal   = glm::vec3(1.0f, 0.0f, 0.0f);
+    tPtEnd.Color    = glm::vec4(0.0f, 0.0f, 0.5f, 1.0f);
 
     data.push_back(sPtStart);
     data.push_back(tPtStart);
     data.push_back(sPtEnd);
     data.push_back(tPtEnd);
 
-    m_vbo->setData(&data[0], GL_STATIC_DRAW, data.size(), GL_POINTS);
-    m_vbo->bindAttribs();
+    m_vbo->setData(data, GL_POINTS);
 
     glm::mat4 model(1.0f);
     glm::mat4 view = trans.view;

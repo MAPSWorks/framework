@@ -2,7 +2,7 @@
 #include "frustum.h"
 #include "shader.h"
 #include "spline.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 
 Camera::Camera(glm::vec3 pos,
         float     heading,
@@ -53,19 +53,10 @@ Camera::Camera(glm::vec3 pos,
     m_spline = new Spline();
     m_splineView = new Spline();
     m_splineSpeed = new Spline();
-    m_splineVBO = new VertexBufferObjectAttribs();
-
-    m_splineVBO->addAttrib(VERTEX_POSITION);
-    m_splineVBO->addAttrib(VERTEX_NORMAL);
-    m_splineVBO->addAttrib(VERTEX_COLOR);
-    m_splineVBO->addAttrib(VERTEX_TEXTURE);
+    m_splineVBO = new RenderableObject();
 
     // Frame
-    m_frameVBO = new VertexBufferObjectAttribs(); 
-    m_frameVBO->addAttrib(VERTEX_POSITION);
-    m_frameVBO->addAttrib(VERTEX_NORMAL);
-    m_frameVBO->addAttrib(VERTEX_COLOR);
-    m_frameVBO->addAttrib(VERTEX_TEXTURE);
+    m_frameVBO = new RenderableObject(); 
 
     update();
 
@@ -130,7 +121,6 @@ void Camera::update(){
 
     m_pos += m_dir;
     m_pos += m_strafe;
-
 }
 
 void Camera::lock(){
@@ -563,15 +553,15 @@ void Camera::determineMovement(){
 }
 
 void Camera::render(Shader* shader){
-        glm::mat4 model(1.0f);
-        shader->setMatrix("matModel", model);
+    glm::mat4 model(1.0f);
+    shader->setMatrix("matModel", model);
 
-        if(m_renderFrustum){
-            m_frustum->drawLines();
-        }
+    if(m_renderFrustum){
+        m_frustum->drawLines();
+    }
 
-        renderFrames();
-        renderSpline();
+    renderFrames();
+    renderSpline();
 }
 
 void Camera::renderFrames(){
@@ -581,25 +571,19 @@ void Camera::renderFrames(){
 
     glm::vec4 frameColor(m_cameraColor.x, m_cameraColor.y, m_cameraColor.z, 0.7f);
     // Add vertex data
-    vector<VertexBufferObjectAttribs::DATA> data;
+    vector<RenderableObject::Vertex> data;
     float alpha_ratio = 1.0f / m_camFrames.size();
     for(size_t i = 0; i < m_camFrames.size(); ++i) { 
         float color_ratio = 1.0 - 0.5f * i * alpha_ratio;
         glm::vec3 p = m_camFrames.at(i).pos;
 
-        VertexBufferObjectAttribs::DATA pv;
-        pv.vx = p.x;
-        pv.vy = p.y;
-        pv.vz = -p.z;
-        pv.cx = frameColor.x * color_ratio;
-        pv.cy = frameColor.y * color_ratio;
-        pv.cz = frameColor.z * color_ratio;
-        pv.cw = frameColor.w;
+        RenderableObject::Vertex pv;
+        pv.Position = glm::vec3(p.x, p.y, -p.z);
+        pv.Color    = glm::vec4(frameColor.x * color_ratio, frameColor.y * color_ratio, frameColor.z * color_ratio, frameColor.w);
         data.push_back(pv);
     }
 
-    m_frameVBO->setData(&data[0], GL_STATIC_DRAW, data.size(), GL_POINTS);
-    m_frameVBO->bindAttribs();
+    m_frameVBO->setData(data, GL_POINTS);
     glPointSize(10.0f); 
         m_frameVBO->render();
     glPointSize(1.0f);
@@ -611,23 +595,17 @@ void Camera::renderSpline(){
 
     glm::vec4 splineColor(0.0f, 0.807f, 0.819f, 0.7f);
     // Add vertex data
-    vector<VertexBufferObjectAttribs::DATA> data;
+    vector<RenderableObject::Vertex> data;
     for(float f = 0.0f;  f<1.0f; f += 0.01f) { 
         float color_ratio = 1.0f - 0.5f * f;
         glm::vec3 v = m_spline->interpolatedPoint(f);
 
-        VertexBufferObjectAttribs::DATA pv;
-        pv.vx = v.x;
-        pv.vy = v.y;
-        pv.vz = v.z;
-        pv.cx = splineColor.x;
-        pv.cy = splineColor.y;
-        pv.cz = splineColor.z;
-        pv.cw = splineColor.w;
+        RenderableObject::Vertex pv;
+        pv.Position = v;
+        pv.Color    = splineColor;
         data.push_back(pv);
     }
 
-    m_splineVBO->setData(&data[0], GL_STATIC_DRAW, data.size(), GL_LINE_STRIP);
-    m_splineVBO->bindAttribs();
+    m_splineVBO->setData(data, GL_LINE_STRIP);
     m_splineVBO->render();
 }

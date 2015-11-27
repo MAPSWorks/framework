@@ -12,7 +12,7 @@
 
 class Shader;
 class Texture;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class NiceGrid
 {
@@ -33,7 +33,7 @@ private:
     GLfloat                   m_rep;
 
     Texture                   *m_texture;
-    VertexBufferObjectAttribs *m_vbo;
+    RenderableObject          *m_vbo;
 
     glm::vec3                 m_ambient;
     glm::vec3                 m_diffuse;

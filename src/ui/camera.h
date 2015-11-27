@@ -13,7 +13,7 @@
 class Shader;
 class Frustum;
 class Spline;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class Camera {
     public:
@@ -133,7 +133,7 @@ class Camera {
         Spline                    *m_spline;
         Spline                    *m_splineView;
         Spline                    *m_splineSpeed;
-        VertexBufferObjectAttribs *m_splineVBO;
+        RenderableObject          *m_splineVBO;
 
         // Quaternion helper
         glm::quat                 m_qHeading;
@@ -153,7 +153,7 @@ class Camera {
         int                       m_activeFrameSet;
         QString                   m_activeFrameSetName;
         QString                   m_frameSetFolder;
-        VertexBufferObjectAttribs *m_frameVBO;
+        RenderableObject          *m_frameVBO;
 
         // Visualize camera
         bool                      m_renderFrustum;

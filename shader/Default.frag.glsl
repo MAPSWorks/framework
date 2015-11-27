@@ -1,14 +1,8 @@
-//Author: Sören Pirk
-//Date: 22.01.2013
-
+//Author: Chen Chen
+//Date: 11/27/2015
 #version 400 core
 
-in vec4 VertPosition;
-in vec4 VertNormal;
 in vec4 VertColor;
-in vec4 VertTexture;
-
-uniform vec3 lightPos;
 
 out vec4 outColor;
 

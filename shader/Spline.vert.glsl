@@ -1,5 +1,5 @@
-//Author: Chen Chen 
-//Date: 02.10.2015
+//Author: Chen Chen
+//Date: 11/27/2015
 
 #version 400 core
 
@@ -12,18 +12,18 @@ uniform mat4x4 matModel;
 uniform mat4x4 matView;
 uniform mat4x4 matProjection;
 
-layout(location = VERT_POSITION) in vec4 Position;
-layout(location = VERT_NORMAL)   in vec4 Normal;
+layout(location = VERT_POSITION) in vec3 Position;
+layout(location = VERT_NORMAL)   in vec3 Normal;
 layout(location = VERT_COLOR)    in vec4 Color;
-layout(location = VERT_TEXTURE)  in vec4 Texture;
+layout(location = VERT_TEXTURE)  in vec2 Texture;
 
 out vec4 VertColor;
-out vec4 VertNormal;
+out vec3 VertNormal;
 
 void main()
 {	   
 	VertColor    = Color;
     VertNormal   = Normal;
 	
-    gl_Position = matProjection * matView * matModel * vec4(Position.xyz, 1);
+    gl_Position = matProjection * matView * matModel * vec4(Position, 1);
 }

@@ -39,6 +39,11 @@ class Color {
         void invert();
         Color inverted();
 
+        // Static Functions
+        static glm::vec4 getDiscreteColor(int idx);
+        static glm::vec4 getContinuousColor(float value, float low = 0.0f, float hight = 1.0f, bool interpolate = false);
+        static glm::vec4 getJetColor(float value);
+
         //Assignment
         Color &operator =  (const Color &c);
         Color &operator += (const Color &c);

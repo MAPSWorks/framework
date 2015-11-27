@@ -3,7 +3,7 @@
 
 #include "headers.h"
 
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class Mesh
 {
@@ -11,13 +11,13 @@ public:
    Mesh();
    ~Mesh();
 
-   static vector<VertexBufferObjectAttribs *> obj(const QString &fileName, const glm::vec3 &rot = glm::vec3(0.0f, 0.0f, 0.0f), const glm::vec3 &scale = glm::vec3(1.0f, 1.0f, 1.0f), GLenum primitive = GL_TRIANGLES);
-   static vector<VertexBufferObjectAttribs*> obj(QString fileName);
-   static VertexBufferObjectAttribs *quadLines(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4());
-   static VertexBufferObjectAttribs *quad(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
-   static VertexBufferObjectAttribs *quad(int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
-   static VertexBufferObjectAttribs *sphere(float radius, int iterations, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
-   static VertexBufferObjectAttribs *box(const glm::vec3 &mi, const glm::vec3 &ma, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+   static vector<RenderableObject *> obj(const QString &fileName, const glm::vec3 &rot = glm::vec3(0.0f, 0.0f, 0.0f), const glm::vec3 &scale = glm::vec3(1.0f, 1.0f, 1.0f), GLenum primitive = GL_TRIANGLES);
+   static vector<RenderableObject*> obj(QString fileName);
+   static RenderableObject *quadLines(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4());
+   static RenderableObject *quad(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+   static RenderableObject *quad(int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+   static RenderableObject *sphere(float radius, int iterations, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+   static RenderableObject *box(const glm::vec3 &mi, const glm::vec3 &ma, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
 
 private:
     typedef struct 

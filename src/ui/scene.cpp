@@ -1,7 +1,7 @@
 #include "scene.h"
 #include "nice_grid.h"
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 #include "mesh.h"
 #include "camera_manager.h"
 #include "object.h"

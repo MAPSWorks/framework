@@ -1,5 +1,5 @@
 //Author: Chen Chen
-//Date: 10.09.2015
+//Date: 11/27/2015
 
 #version 400 core
 
@@ -8,10 +8,10 @@
 #define VERT_COLOR		2
 #define VERT_TEXTURE    3
 
-layout(location = VERT_POSITION) in vec4 Position;
-layout(location = VERT_NORMAL)   in vec4 Normal;
+layout(location = VERT_POSITION) in vec3 Position;
+layout(location = VERT_NORMAL)   in vec3 Normal;
 layout(location = VERT_COLOR)    in vec4 Color;
-layout(location = VERT_TEXTURE)  in vec4 Texture;
+layout(location = VERT_TEXTURE)  in vec2 Texture;
 
 out vec2 TexCoords;
 
@@ -30,10 +30,10 @@ uniform mat4x4 matViewProjection;
 
 void main()
 {	   
-    gl_Position = matProjection * matView * matModel * Position;
+    gl_Position = matProjection * matView * matModel * vec4(Position, 1.0f);
     
-    vs_out.FragPos = vec3(matModel * Position);
-    vs_out.Normal = transpose(inverse(mat3(matModel))) * Normal.xyz;
-    vs_out.TexCoords = Texture.xy;
+    vs_out.FragPos = vec3(matModel * vec4(Position, 1.0f));
+    vs_out.Normal = transpose(inverse(mat3(matModel))) * Normal;
+    vs_out.TexCoords = Texture;
     vs_out.FragPosLightSpace = matLightView * vec4(vs_out.FragPos, 1.0f);
 }

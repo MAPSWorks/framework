@@ -1,6 +1,6 @@
 #include "object.h"
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 #include "model_loader_obj.h"
 
 Object::Object(const QString &fileName, const glm::vec3 &pos, const glm::vec3 &scale, const glm::vec4 &rot, const glm::vec4 &color)
@@ -24,13 +24,13 @@ Object::~Object()
 
     for(int i=m_vbosTriangles.size()-1; i>=0; --i)
     {
-        VertexBufferObjectAttribs *vbo = m_vbosTriangles[i];
+        RenderableObject *vbo = m_vbosTriangles[i];
         delete vbo;
     }
 
     for(int i=m_vbosLines.size()-1; i>=0; --i)
     {
-        VertexBufferObjectAttribs *vbo = m_vbosLines[i];
+        RenderableObject *vbo = m_vbosLines[i];
         delete vbo;
     }
 }
@@ -152,7 +152,7 @@ void Object::buildVBOs(const QString &fileName, const glm::vec3 &rot, const glm:
 
         m_center =  (glm::vec4(m_min, 1.0f) + glm::vec4(m_max, 1.0f)) * 0.5f;
 
-        VertexBufferObjectAttribs::DATA *data = new VertexBufferObjectAttribs::DATA[tmpVertices.size()];
+        vector<RenderableObject::Vertex> data(tmpVertices.size());
 
 		for(uint i=0; i<tmpVertices.size(); ++i)
 		{
@@ -160,46 +160,17 @@ void Object::buildVBOs(const QString &fileName, const glm::vec3 &rot, const glm:
             glm::vec3 n = tmpNormals[i];
             glm::vec3 t = tmpTexCoords[i];
 
-			data[i].vx = v.x;
-			data[i].vy = v.y;
-			data[i].vz = v.z;
-			data[i].vw = 1.0f;
-
-            data[i].cx = m_color.x;
-            data[i].cy = m_color.y;
-            data[i].cz = m_color.z;
-			data[i].cw = m_color.w;
-			
-            data[i].nx = n.x;
-			data[i].ny = n.y;
-			data[i].nz = n.z;
-			data[i].nw = 1.0f;
-            
-			data[i].tx = t.x;
-			data[i].ty = t.y;
-            data[i].tz = 0.0f;
-            data[i].tw = 0.0f;
+            data[i].Position = v;
+            data[i].Color = m_color;
+            data[i].Normal = n;
+            data[i].TexCoords = glm::vec2(t.x, t.y);
 		}
 
-		VertexBufferObjectAttribs* vboMesh = new VertexBufferObjectAttribs();
-		vboMesh->setData(data, GL_STATIC_DRAW, tmpVertices.size(), GL_TRIANGLES); 
+		RenderableObject* vboMesh = new RenderableObject();
+		vboMesh->setData(data, GL_TRIANGLES); 
 
-		vboMesh->addAttrib(VERTEX_POSITION);
-		vboMesh->addAttrib(VERTEX_NORMAL);
-		vboMesh->addAttrib(VERTEX_COLOR);
-		vboMesh->addAttrib(VERTEX_TEXTURE);
-		vboMesh->bindAttribs();
-
-		VertexBufferObjectAttribs* vboLines = new VertexBufferObjectAttribs();
-		vboLines->setData(data, GL_STATIC_DRAW, tmpVertices.size(), GL_LINES); 
-
-		vboLines->addAttrib(VERTEX_POSITION);
-		vboLines->addAttrib(VERTEX_NORMAL);
-		vboLines->addAttrib(VERTEX_COLOR);
-		vboLines->addAttrib(VERTEX_TEXTURE);
-		vboLines->bindAttribs();
-
-		delete[] data;
+		RenderableObject* vboLines = new RenderableObject();
+		vboLines->setData(data,  GL_LINES); 
 
         m_vbosTriangles.push_back(vboMesh);
         m_vbosLines.push_back(vboLines);

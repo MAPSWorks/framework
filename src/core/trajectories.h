@@ -17,7 +17,7 @@
 #include <Eigen/Dense> 
 
 class Shader;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class Trajectories { 
     public: 
@@ -92,8 +92,8 @@ class Trajectories {
 
         // Rendering
         DrawMode                                 m_renderMode;
-        unique_ptr<VertexBufferObjectAttribs>    m_pointVBO;
-        unique_ptr<VertexBufferObjectAttribs>    m_animateVBO;
+        unique_ptr<RenderableObject>    m_pointVBO;
+        unique_ptr<RenderableObject>    m_animateVBO;
 
         // Animation
         float                                    m_animationTime;

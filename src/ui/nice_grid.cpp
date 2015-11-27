@@ -1,6 +1,6 @@
 #include "nice_grid.h"
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 #include "texture.h"
 #include "mesh.h"
 
@@ -93,138 +93,34 @@ void NiceGrid::setDiffuseColor(float r, float g, float b)
 void NiceGrid::createVBO()
 {
     uint nrVertices = 6;
-    VertexBufferObjectAttribs::DATA *data = new VertexBufferObjectAttribs::DATA[nrVertices];
+    vector<RenderableObject::Vertex> data(nrVertices);
 
     // first triangle
-    data[0].vx = -m_size;
-    data[0].vy = 0.0f;;
-    data[0].vz = -m_size;
-    data[0].vw = 1.0f;
+    data[0].Position  = glm::vec3(-m_size, 0.0f, -m_size);
+    data[0].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
+    data[0].TexCoords = glm::vec2(0.0f, m_rep);
 
-    data[0].nx = 0.0f;
-    data[0].ny = 1.0f;
-    data[0].nz = 0.0f;
-    data[0].nw = 0.0f;
+    data[1].Position  = glm::vec3(-m_size, 0.0f, m_size);
+    data[1].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
+    data[1].TexCoords = glm::vec2(0.0f, 0.0f);
 
-    data[0].cx = 1.0f;
-    data[0].cy = 1.0f;
-    data[0].cz = 1.0f;
-    data[0].cw = 1.0f;
-
-    data[0].tx = 0.0f;
-    data[0].ty = m_rep;
-    data[0].tz = 0.0f;
-    data[0].tw = 0.0f;
-
-    data[1].vx = -m_size;
-    data[1].vy = 0.0f;
-    data[1].vz = m_size;
-    data[1].vw = 1.0f;
-
-    data[1].nx = 0.0f;
-    data[1].ny = 1.0f;
-    data[1].nz = 0.0f;
-    data[1].nw = 0.0f;
-
-    data[1].cx = 1.0f;
-    data[1].cy = 1.0f;
-    data[1].cz = 1.0f;
-    data[1].cw = 1.0f;
-
-    data[1].tx = 0.0f;
-    data[1].ty = 0.0f;
-    data[1].tz = 0.0f;
-    data[1].tw = 0.0f;
-
-    data[2].vx = m_size;
-    data[2].vy = 0.0f;
-    data[2].vz = m_size;
-    data[2].vw = 1.0f;
-
-    data[2].nx = 0.0f;
-    data[2].ny = 1.0f;
-    data[2].nz = 0.0f;
-    data[2].nw = 0.0f;
-
-    data[2].cx = 1.0f;
-    data[2].cy = 1.0f;
-    data[2].cz = 1.0f;
-    data[2].cw = 1.0f;
-
-    data[2].tx = m_rep;
-    data[2].ty = 0.0f;
-    data[2].tz = 0.0f;
-    data[2].tw = 0.0f;
+    data[2].Position  = glm::vec3(m_size, 0.0f, m_size);
+    data[2].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
+    data[2].TexCoords = glm::vec2(m_rep, 0.0f);
 
     // Second triangle
-    data[3].vx = m_size;
-    data[3].vy = 0.0f;
-    data[3].vz = m_size;
-    data[3].vw = 1.0f;
+    data[3].Position  = glm::vec3(m_size, 0.0f, m_size);
+    data[3].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
+    data[3].TexCoords = glm::vec2(m_rep, 0.0f);
 
-    data[3].nx = 0.0f;
-    data[3].ny = 1.0f;
-    data[3].nz = 0.0f;
-    data[3].nw = 0.0f;
+    data[4].Position  = glm::vec3(m_size, 0.0f, -m_size);
+    data[4].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
+    data[4].TexCoords = glm::vec2(m_rep, m_rep);
 
-    data[3].cx = 1.0f;
-    data[3].cy = 1.0f;
-    data[3].cz = 1.0f;
-    data[3].cw = 1.0f;
+    data[5].Position  = glm::vec3(-m_size, 0.0f, -m_size);
+    data[5].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
+    data[5].TexCoords = glm::vec2(0, m_rep);
 
-    data[3].tx = m_rep;
-    data[3].ty = 0.0f;
-    data[3].tz = 0.0f;
-    data[3].tw = 0.0f;
-
-    data[4].vx = m_size;
-    data[4].vy = 0.0f;
-    data[4].vz = -m_size;
-    data[4].vw = 1.0f;
-
-    data[4].nx = 0.0f;
-    data[4].ny = 1.0f;
-    data[4].nz = 0.0f;
-    data[4].nw = 0.0f;
-
-    data[4].cx = 1.0f;
-    data[4].cy = 1.0f;
-    data[4].cz = 1.0f;
-    data[4].cw = 1.0f;
-
-    data[4].tx = m_rep;
-    data[4].ty = m_rep;
-    data[4].tz = 0.0f;
-    data[4].tw = 0.0f;
-
-    data[5].vx = -m_size;
-    data[5].vy = 0.0f;
-    data[5].vz = -m_size;
-    data[5].vw = 1.0f;
-
-    data[5].nx = 0.0f;
-    data[5].ny = 1.0f;
-    data[5].nz = 0.0f;
-    data[5].nw = 0.0f;
-
-    data[5].cx = 1.0f;
-    data[5].cy = 1.0f;
-    data[5].cz = 1.0f;
-    data[5].cw = 1.0f;
-
-    data[5].tx = 0;
-    data[5].ty = m_rep;
-    data[5].tz = 0.0f;
-    data[5].tw = 0.0f;
-
-    m_vbo = new VertexBufferObjectAttribs();
-    m_vbo->setData(data, GL_STATIC_DRAW, nrVertices, GL_TRIANGLES);
-
-    m_vbo->addAttrib(VERTEX_POSITION);
-    m_vbo->addAttrib(VERTEX_NORMAL);
-    m_vbo->addAttrib(VERTEX_COLOR);
-    m_vbo->addAttrib(VERTEX_TEXTURE);
-    m_vbo->bindAttribs();
-
-    delete[] data;
+    m_vbo = new RenderableObject();
+    m_vbo->setData(data, GL_TRIANGLES);
 }

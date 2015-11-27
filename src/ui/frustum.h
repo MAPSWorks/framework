@@ -10,9 +10,9 @@
 #define FRUSTUM_H_
 
 #include "headers.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 
-class VertexBufferObjectAttribs;
+class RenderableObject;
 
 class Frustum 
 {
@@ -42,11 +42,11 @@ class Frustum
         glm::vec3 ntl,ntr,nbl,nbr,ftl,ftr,fbl,fbr;
         float nw,nh,fw,fh;
 
-        VertexBufferObjectAttribs*              m_pointVBO;
-        VertexBufferObjectAttribs*              m_lineVBO;
-        VertexBufferObjectAttribs*              m_planeVBO;
-        VertexBufferObjectAttribs*              m_normalVBO;
-        vector<VertexBufferObjectAttribs::DATA> m_vertices;
+        RenderableObject*                       m_pointVBO;
+        RenderableObject*                       m_lineVBO;
+        RenderableObject*                       m_planeVBO;
+        RenderableObject*                       m_normalVBO;
+        vector<RenderableObject::Vertex>        m_vertices;
         vector<GLuint>                          m_lineIdxs;
         vector<GLuint>                          m_planeIdxs;
 };

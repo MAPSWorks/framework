@@ -8,7 +8,7 @@ class FrameBufferObjectMultisample;
 class FrameBufferObject;
 class Shader;
 class Scene;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 class Texture;
 
 class Renderer

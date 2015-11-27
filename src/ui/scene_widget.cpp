@@ -24,9 +24,9 @@ SceneWidget::SceneWidget(QWidget* parent)
     m_openingFile(false)
 {
     // update drawing at least every 25ms
-    m_timer = new QTimer(this);
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
-    m_timer->start(25); 
+    //m_timer = new QTimer(this);
+    //connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
+    //m_timer->start(25); 
 
     this->resize(this->width(), this->height());
     this->setFocus();
@@ -43,9 +43,9 @@ SceneWidget::SceneWidget(QWidget* parent)
 }
 
 SceneWidget::~SceneWidget(){
-    m_timer->stop();
-    if(m_timer)
-        delete m_timer;
+    //m_timer->stop();
+    //if(m_timer)
+    //    delete m_timer;
 
     if(m_scene) { 
         delete m_scene; 
@@ -141,6 +141,7 @@ void SceneWidget::slotClear(){
     if(m_scene->m_osmMap) { 
         m_scene->m_osmMap->clear();
     } 
+    resetBBOX();
     params::inst()->bboxUpdated = true;
 }
 
@@ -237,16 +238,19 @@ void SceneWidget::resizeGL(int width, int height){
  *Keyboard and Mouse
  */
 void SceneWidget::wheelEvent(QWheelEvent* event){
+    int dy = event->pixelDelta().y();
+    dy = clamp(dy, -10, 10);
+
     if(!m_altPressed && !m_ctrlPressed && !m_rightButton)
     {
         // For Orthogonal Camera Mode
         double tx = static_cast<double>(event->x()) / width() - 0.5f;
         double ty = -static_cast<double>(event->y()) / height() + 0.5f;
 
-        m_cameraManager->onMouseWheel(event->pixelDelta().y(),
+        m_cameraManager->onMouseWheel(dy,
                                       tx,
                                       ty);
-    }
+    } 
 
     // Alt + wheel for moving the light
     //if(m_altPressed)
@@ -263,6 +267,7 @@ void SceneWidget::wheelEvent(QWheelEvent* event){
     //        update();
     //    } 
     //}
+    update();
 
     event->accept();
 }
@@ -293,6 +298,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event){
 
     m_mouse.setX(event->x());
     m_mouse.setY(event->y());
+    update();
 }
 
 void SceneWidget::mousePressEvent(QMouseEvent* event){
@@ -357,6 +363,12 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         case Qt::Key_Space:
             loop(params::inst()->polygonMode, 0, 1, 1);
             break;
+        case Qt::Key_Q:
+            MainWindow::getInstance().close();
+            break;
+        case Qt::Key_V:
+            m_cameraManager->toggleCameraMode();
+            break;
         //case Qt::Key_PageUp: 
         //    m_cameraManager->increaseSpeed();
         //    break;
@@ -381,6 +393,7 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         default:
             break;
     }
+    update();
 }
 
 void SceneWidget::keyReleaseEvent(QKeyEvent* event){

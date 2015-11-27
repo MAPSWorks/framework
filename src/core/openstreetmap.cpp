@@ -1,7 +1,7 @@
 #include "openstreetmap.h"
 
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 #include "latlon_converter.h"
 
 #include <pcl/common/centroid.h>
@@ -126,18 +126,9 @@ OpenStreetMap::OpenStreetMap()
       m_searchTree(new pcl::search::FlannSearch<MapPointType>(false)),
       m_interpolation(10.0f),
       m_dataUpdated(false),
-      m_pointVBO(new VertexBufferObjectAttribs),
-      m_lineVBO(new VertexBufferObjectAttribs)
+      m_pointVBO(new RenderableObject),
+      m_lineVBO(new RenderableObject)
 {
-    m_pointVBO->addAttrib(VERTEX_POSITION);
-    m_pointVBO->addAttrib(VERTEX_NORMAL);
-    m_pointVBO->addAttrib(VERTEX_COLOR);
-    m_pointVBO->addAttrib(VERTEX_TEXTURE);
-
-    m_lineVBO->addAttrib(VERTEX_POSITION);
-    m_lineVBO->addAttrib(VERTEX_NORMAL);
-    m_lineVBO->addAttrib(VERTEX_COLOR);
-    m_lineVBO->addAttrib(VERTEX_TEXTURE);
 }
 
 OpenStreetMap::~OpenStreetMap(){
@@ -305,7 +296,7 @@ void OpenStreetMap::render(Shader* shader){
 }
 
 void OpenStreetMap::prepareForRendering(){
-    vector<VertexBufferObjectAttribs::DATA> vertexData;
+    vector<RenderableObject::Vertex> vertexData;
     auto es = boost::edges(m_graph);
     for(auto eit = es.first; eit != es.second; ++eit) { 
         glm::vec4 edge_color = getWayColor(m_graph[*eit].type);
@@ -318,36 +309,24 @@ void OpenStreetMap::prepareForRendering(){
         glm::vec3 normalizedTargetV = BBOXNormalize(m_graph[target_v].easting,
                                                     m_graph[target_v].northing, 0.0);
 
-        VertexBufferObjectAttribs::DATA source_pt, target_pt;
-        source_pt.vx = normalizedSourceV.x * 100;
-        source_pt.vy = 1.0f;
-        source_pt.vz = -normalizedSourceV.y * 100;
-        source_pt.cx = edge_color.r;
-        source_pt.cy = edge_color.g;
-        source_pt.cz = edge_color.b;
-        source_pt.cw = edge_color.w;
+        RenderableObject::Vertex source_pt, target_pt;
+        source_pt.Position.x = normalizedSourceV.x * 100;
+        source_pt.Position.y = 1.0f;
+        source_pt.Position.z = -normalizedSourceV.y * 100;
+        source_pt.Color = edge_color;
 
-        target_pt.vx = normalizedTargetV.x * 100;
-        target_pt.vy = 1.0f;
-        target_pt.vz = -normalizedTargetV.y * 100;
-        target_pt.cx = edge_color.r;
-        target_pt.cy = edge_color.g;
-        target_pt.cz = edge_color.b;
-        target_pt.cw = edge_color.w;
+        target_pt.Position.x = normalizedTargetV.x * 100;
+        target_pt.Position.y = 1.0f;
+        target_pt.Position.z = -normalizedTargetV.y * 100;
+        target_pt.Color = edge_color;
         vertexData.push_back(source_pt);
         vertexData.push_back(target_pt);
     }
-    m_pointVBO->setData(&vertexData[0],
-                        GL_STATIC_DRAW,
-                        vertexData.size(),
+    m_pointVBO->setData(vertexData,
                         GL_POINTS);
-    m_pointVBO->bindAttribs();
 
-    m_lineVBO->setData(&vertexData[0],
-                       GL_STATIC_DRAW,
-                       vertexData.size(),
+    m_lineVBO->setData(vertexData,
                        GL_LINES);
-    m_lineVBO->bindAttribs();
     m_dataUpdated = true;
 }
 

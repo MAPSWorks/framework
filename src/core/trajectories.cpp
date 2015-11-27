@@ -1,7 +1,7 @@
 #include "trajectories.h"
 
 #include "shader.h"
-#include "vertexbuffer_object_attribs.h"
+#include "renderable_object.h"
 
 #include <fcntl.h>
 #include "gps_trajectory.pb.h"
@@ -17,21 +17,11 @@
 Trajectories::Trajectories()
     : m_gpsPoints(new pcl::PointCloud<GpsPointType>),
       m_searchTree(new pcl::search::FlannSearch<GpsPointType>(false)),
-      m_pointVBO(new VertexBufferObjectAttribs),
-      m_animateVBO(new VertexBufferObjectAttribs),
+      m_pointVBO(new RenderableObject),
+      m_animateVBO(new RenderableObject),
       m_renderMode(POINTS),
       m_animationTime(0.0f)
 {
-    m_pointVBO->addAttrib(VERTEX_POSITION);
-    m_pointVBO->addAttrib(VERTEX_NORMAL);
-    m_pointVBO->addAttrib(VERTEX_COLOR);
-    m_pointVBO->addAttrib(VERTEX_TEXTURE);
-
-    m_animateVBO->addAttrib(VERTEX_POSITION);
-    m_animateVBO->addAttrib(VERTEX_NORMAL);
-    m_animateVBO->addAttrib(VERTEX_COLOR);
-    m_animateVBO->addAttrib(VERTEX_TEXTURE);
-
 }
 
 Trajectories::~Trajectories(){
@@ -135,16 +125,15 @@ void Trajectories::prepareForRendering(){
 }
 
 void Trajectories::updatePointVBO(){
-    vector<VertexBufferObjectAttribs::DATA> vertexData;
+    vector<RenderableObject::Vertex> vertexData;
     glm::vec4 color(1.0f, 1.0f, 0.0f, 0.3f);
 
     for(size_t i = 0; i < m_easting.size(); ++i) { 
-        VertexBufferObjectAttribs::DATA newPt;
+        RenderableObject::Vertex newPt;
         glm::vec3 normalizedV = BBOXNormalize(m_easting[i], m_northing[i], 0.0);
-        newPt.vx = normalizedV.x * 100; 
-        newPt.vy = m_speed[i] / 500.0f;
-        //newPt.vy = 1.0f;
-        newPt.vz = -normalizedV.y * 100;
+        newPt.Position.x  = normalizedV.x * 100; 
+        newPt.Position.y  = m_speed[i] / 500.0f;
+        newPt.Position.z  = -normalizedV.y * 100;
 
         float ratio = (m_speed[i] * m_speed[i]) / 1e6;
         if(ratio > 1.0f)
@@ -152,21 +141,18 @@ void Trajectories::updatePointVBO(){
         if(ratio < 0.1f)
             ratio = 0.1f;
 
-        newPt.cx = ratio;
-        newPt.cy = 1.0f;
-        newPt.cz = 1.0f - ratio;
-        newPt.cw = color.w;
+        newPt.Color.x = ratio;
+        newPt.Color.y = 1.0f;
+        newPt.Color.z = 1.0f - ratio;
+        newPt.Color.w = color.w;
         vertexData.push_back(newPt);
     } 
-    m_pointVBO->setData(&vertexData[0],
-                        GL_STATIC_DRAW,
-                        vertexData.size(),
+    m_pointVBO->setData(vertexData,
                         GL_POINTS);
-    m_pointVBO->bindAttribs();
 }
 
 void Trajectories::updateAnimateVBO(){
-    vector<VertexBufferObjectAttribs::DATA> vertexData;
+    vector<RenderableObject::Vertex> vertexData;
     glm::vec4 color(1.0f, 1.0f, 0.0f, 0.3f);
 
     float max_deltaT = 0.0f;
@@ -186,12 +172,11 @@ void Trajectories::updateAnimateVBO(){
             if(dt > cur_t) 
                 break;
 
-            VertexBufferObjectAttribs::DATA newPt;
+            RenderableObject::Vertex newPt;
             glm::vec3 normalizedV = BBOXNormalize(m_easting[traj[j]], m_northing[traj[j]], 0.0);
-            newPt.vx = normalizedV.x * 100; 
-            //newPt.vy = m_speed[traj[j]] / 500.0f;
-            newPt.vy = 1.0f;
-            newPt.vz = -normalizedV.y * 100;
+            newPt.Position.x = normalizedV.x * 100; 
+            newPt.Position.y  = 1.0f;
+            newPt.Position.z = -normalizedV.y * 100;
 
             float ratio = (dt - cur_t + t_window) / t_window;
             if(ratio > 1.0f)
@@ -199,10 +184,7 @@ void Trajectories::updateAnimateVBO(){
             if(ratio < 0)
                 ratio = 0.0f;
 
-            newPt.cx = ratio;
-            newPt.cy = 1.0f;
-            newPt.cz = 1.0f - ratio;
-            newPt.cw = color.w;
+            newPt.Color = glm::vec4(ratio, 1.0f, 1.0f - ratio, color.w);
 
             vertexData.push_back(newPt);
         } 
@@ -215,11 +197,8 @@ void Trajectories::updateAnimateVBO(){
         m_animationTime = 0; 
     } 
 
-    m_animateVBO->setData(&vertexData[0],
-                          GL_STATIC_DRAW,
-                          vertexData.size(),
+    m_animateVBO->setData(vertexData,
                           GL_POINTS);
-    m_animateVBO->bindAttribs();
 }
 /*=====================================================================================
         End of Updating VBOs

@@ -6,26 +6,11 @@ Frustum::Frustum()
     m_ratio = 1.0f;
     m_ncp = 1.0f;
     m_fcp = 1000.0f;
-
-    m_pointVBO = new VertexBufferObjectAttribs();
-    m_lineVBO = new VertexBufferObjectAttribs();
-    m_planeVBO = new VertexBufferObjectAttribs();
-    m_normalVBO = new VertexBufferObjectAttribs();
-
-    m_pointVBO->addAttrib(VERTEX_POSITION);
-    m_pointVBO->addAttrib(VERTEX_NORMAL);
-    m_pointVBO->addAttrib(VERTEX_COLOR);
-    m_pointVBO->addAttrib(VERTEX_TEXTURE);
-
-    m_lineVBO->addAttrib(VERTEX_POSITION);
-    m_lineVBO->addAttrib(VERTEX_NORMAL);
-    m_lineVBO->addAttrib(VERTEX_COLOR);
-    m_lineVBO->addAttrib(VERTEX_TEXTURE);
-
-    m_planeVBO->addAttrib(VERTEX_POSITION);
-    m_planeVBO->addAttrib(VERTEX_NORMAL);
-    m_planeVBO->addAttrib(VERTEX_COLOR);
-    m_planeVBO->addAttrib(VERTEX_TEXTURE);
+    
+    m_pointVBO = new RenderableObject();
+    m_lineVBO = new RenderableObject();
+    m_planeVBO = new RenderableObject();
+    m_normalVBO = new RenderableObject();
 
     m_vertices.resize(8);
 
@@ -43,39 +28,15 @@ Frustum::Frustum()
                    0, 3, 2, 2, 1, 0,
                    4, 7, 6, 6, 5, 4};
 
-    glm::vec3 frustumColor(1.0, 1.0f, 0.0f);
-    m_vertices[0].cx = frustumColor.x;
-    m_vertices[0].cy = frustumColor.y;
-    m_vertices[0].cz = frustumColor.z;
-
-    m_vertices[1].cx = frustumColor.x;
-    m_vertices[1].cy = frustumColor.y;
-    m_vertices[1].cz = frustumColor.z;
-
-    m_vertices[2].cx = frustumColor.x;
-    m_vertices[2].cy = frustumColor.y;
-    m_vertices[2].cz = frustumColor.z;
-
-    m_vertices[3].cx = frustumColor.x;
-    m_vertices[3].cy = frustumColor.y;
-    m_vertices[3].cz = frustumColor.z;
-
-    m_vertices[4].cx = frustumColor.x;
-    m_vertices[4].cy = frustumColor.y;
-    m_vertices[4].cz = frustumColor.z;
-
-    m_vertices[5].cx = frustumColor.x;
-    m_vertices[5].cy = frustumColor.y;
-    m_vertices[5].cz = frustumColor.z;
-
-    m_vertices[6].cx = frustumColor.x;
-    m_vertices[6].cy = frustumColor.y;
-    m_vertices[6].cz = frustumColor.z;
-
-    m_vertices[7].cx = frustumColor.x;
-    m_vertices[7].cy = frustumColor.y;
-    m_vertices[7].cz = frustumColor.z;
-
+    glm::vec4 frustumColor(1.0, 1.0f, 0.0f, 1.0f);
+    m_vertices[0].Color = frustumColor;
+    m_vertices[1].Color = frustumColor;
+    m_vertices[2].Color = frustumColor;
+    m_vertices[3].Color = frustumColor;
+    m_vertices[4].Color = frustumColor;
+    m_vertices[5].Color = frustumColor;
+    m_vertices[6].Color = frustumColor;
+    m_vertices[7].Color = frustumColor;
 }
 
 Frustum::~Frustum(){
@@ -127,50 +88,18 @@ void Frustum::setCamDef(glm::vec3 &p, glm::vec3 &l, glm::vec3 &u) {
 	fbl = fc - Y * fh - X * fw;
 	fbr = fc - Y * fh + X * fw;
 
-    m_vertices[0].vx = ntl.x;
-    m_vertices[0].vy = ntl.y;
-    m_vertices[0].vz = ntl.z;
+    m_vertices[0].Position = ntl;
+    m_vertices[1].Position = ntr;
+    m_vertices[2].Position = nbr;
+    m_vertices[3].Position = nbl;
+    m_vertices[4].Position = ftl;
+    m_vertices[5].Position = ftr;
+    m_vertices[6].Position = fbr;
+    m_vertices[7].Position = fbl;
 
-    m_vertices[1].vx = ntr.x;
-    m_vertices[1].vy = ntr.y;
-    m_vertices[1].vz = ntr.z;
-
-    m_vertices[2].vx = nbr.x;
-    m_vertices[2].vy = nbr.y;
-    m_vertices[2].vz = nbr.z;
-
-    m_vertices[3].vx = nbl.x;
-    m_vertices[3].vy = nbl.y;
-    m_vertices[3].vz = nbl.z;
-
-    m_vertices[4].vx = ftl.x;
-    m_vertices[4].vy = ftl.y;
-    m_vertices[4].vz = ftl.z;
-
-    m_vertices[5].vx = ftr.x;
-    m_vertices[5].vy = ftr.y;
-    m_vertices[5].vz = ftr.z;
-
-    m_vertices[6].vx = fbr.x;
-    m_vertices[6].vy = fbr.y;
-    m_vertices[6].vz = fbr.z;
-
-    m_vertices[7].vx = fbl.x;
-    m_vertices[7].vy = fbl.y;
-    m_vertices[7].vz = fbl.z;
-
-    //cout << "ntl: " << ntl.x << ", " << ntl.y << ", " << ntl.z << endl;
-
-    m_pointVBO->setData(&m_vertices[0], GL_STATIC_DRAW, m_vertices.size(), GL_POINTS);
-    m_pointVBO->bindAttribs();
-
-    m_lineVBO->setData(&m_vertices[0], GL_STATIC_DRAW, m_vertices.size(), GL_LINES);
-    m_lineVBO->setIndexData(&m_lineIdxs[0], GL_STATIC_DRAW, m_lineIdxs.size());
-    m_lineVBO->bindAttribs();
-
-    m_planeVBO->setData(&m_vertices[0], GL_STATIC_DRAW, m_vertices.size(), GL_TRIANGLES);
-    m_planeVBO->setIndexData(&m_planeIdxs[0], GL_STATIC_DRAW, m_planeIdxs.size());
-    m_planeVBO->bindAttribs();
+    m_pointVBO->setData(m_vertices, GL_POINTS);
+    m_lineVBO->setData(m_vertices, m_lineIdxs, GL_LINES);
+    m_planeVBO->setData(m_vertices, m_planeIdxs, GL_TRIANGLES);
 }
 
 void Frustum::drawPoints() 

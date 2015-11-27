@@ -7,7 +7,7 @@
 #include "openstreetmap.h"
 
 class NiceGrid;
-class VertexBufferObjectAttribs;
+class RenderableObject;
 class Shader;
 class CameraManager;
 class Object;

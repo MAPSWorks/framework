@@ -36,9 +36,9 @@ class CameraManager {
 
         // Keyboard / Mouse response
         void onMouseMove(float dx, float dy, int button);
-        void onMouseWheel(int dir,
+        void onMouseWheel(int yoffset,
                           double tx = 0.0f,
-                          double ty = 0.0f); // tx and ty are only for ORTHO camera
+                          double ty = 0.0f); // tx and ty are used for zooming into mouse location
         void onKeyPress(int keyId);
         void onKeyRelease(int keyId);
 
@@ -90,16 +90,13 @@ class CameraManager {
         float                 m_rotHeight;
         glm::vec3             m_rotate; // x,y,z rotation angles
         glm::vec3             m_translate;
-        float                 m_zoom;
 
         // Helper matrices, only used internally when m_useCam = false
         glm::mat4             m_projection;
         glm::mat4             m_view;
 
-        // Ortho Zooming Helper to zoom in mouse wheel pos
-        double                m_orthoZoomTransX;
-        double                m_orthoZoomTransY;
-        double                m_orthoZoomMax;
+        // Helpers to zoom into mouse location
+        glm::vec3             m_zoomTrans;
 
         float                 m_mouseSensitivity;
         float                 m_camSpeed;

@@ -1,10 +1,10 @@
 //Author: Chen Chen
-//Date: 02.10.2015
+//Date: 11/27/2015
 
 #version 400 core
 
 in vec4 VertColor;
-in vec4 VertNormal;
+in vec3 VertNormal;
 
 out vec4 outColor;
 
