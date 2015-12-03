@@ -85,7 +85,7 @@ Texture::Texture(const QImage &img)
   m_createMipMaps(GL_TRUE),
   m_maxAnisotropy(16.0f)
 {
-    QImage swapped_img = img.rgbSwapped().mirrored();
+    QImage swapped_img = img.convertToFormat(QImage::Format_RGBA8888);
     m_data = (GLvoid*)swapped_img.bits();
     m_width = (GLuint)swapped_img.width();
     m_height = (GLuint)swapped_img.height();
@@ -111,7 +111,7 @@ Texture::Texture(const QImage &img, GLint magFilter, GLint minFilter, GLfloat an
   m_createMipMaps(createMipmaps),
   m_maxAnisotropy(anisotrophy)
 {
-    QImage swapped_img = img.rgbSwapped().mirrored();
+    QImage swapped_img = img.convertToFormat(QImage::Format_RGBA8888);
     m_data = (GLvoid*)swapped_img.bits();
     m_width = (GLuint)swapped_img.width();
     m_height = (GLuint)swapped_img.height();

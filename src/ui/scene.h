@@ -11,7 +11,6 @@ class NiceGrid;
 class RenderableObject;
 class Shader;
 class CameraManager;
-class Object;
 class TransformFeedback;
 
 class Scene
@@ -51,7 +50,6 @@ private:
     unique_ptr<Shader>              m_shaderNormal;
     unique_ptr<Shader>              m_shaderDepth;
 
-    vector<unique_ptr<Object>>      m_objects;
     unique_ptr<Model>               m_model;
 
     int                             m_activeIdx;

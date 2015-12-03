@@ -3,7 +3,6 @@
 #include "shader.h"
 #include "renderable_object.h"
 #include "camera_manager.h"
-#include "object.h"
 #include "resource_manager.h"
 
 Scene::Scene(unique_ptr<CameraManager>& camManager)
@@ -54,12 +53,12 @@ void Scene::init()
                                             0.2f * scale)));
 	m_niceGrid.reset(new NiceGrid(params::inst().scale, 40.0f)); 
 
-    unique_ptr<Object> sphere(new Object("../data/Objs/sphere.obj", 
-                                         glm::vec3(0.0f, 1.0f, 0.0f), 
-                                         glm::vec3(1.0f, 1.0f, 1.0f), 
-                                         glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
-                                         glm::vec4(0.2f, 0.596f, 0.859f, 1.0f)));
-    m_objects.push_back(std::move(sphere));
+    //unique_ptr<Object> sphere(new Object("../data/Objs/sphere.obj", 
+    //                                     glm::vec3(0.0f, 1.0f, 0.0f), 
+    //                                     glm::vec3(1.0f, 1.0f, 1.0f), 
+    //                                     glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
+    //                                     glm::vec4(0.2f, 0.596f, 0.859f, 1.0f)));
+    //m_objects.push_back(std::move(sphere));
 
     m_model.reset(new Model("../data/Models/teapot.obj"));
 
@@ -116,7 +115,7 @@ void Scene::renderObjects(const Transform &trans)
     model_shader->setMatrix("matViewport", matViewport);
 
     model_shader->set3f("camPos", m_cameraManager->currentCamPos());
-    model_shader->set3f("OffsetTexSize", glm::vec3(8, 8, 16));
+    model_shader->set3f("OffsetTexSize", params::inst().shadowInfo.offsetTexSize());
 
     model_shader->set3f("Light.Position", m_light->position());
     model_shader->set3f("Light.Intensity", glm::vec3(1.0f));
@@ -200,10 +199,6 @@ void Scene::renderObjects(const Transform &trans)
 
 void Scene::renderObjectsDepth(const Transform &trans)
 {
-    if(m_objects.size() == 0) { 
-        return; 
-    } 
-
     unique_ptr<Shader>& model_shader = ResourceManager::inst().getShader("defaultDepth");
     model_shader->bind();
 
@@ -289,27 +284,27 @@ void Scene::move(const Transform &trans, int x, int y)
 
     if(m_activeIdx >= 0)
     {
-        glm::vec3 p = m_objects[m_activeIdx]->m_position;
+        //glm::vec3 p = m_objects[m_activeIdx]->m_position;
 
-        movY = glm::vec3(0, p.y, 0);
-        float v = 0.1f * x;
-        glm::vec3 dx = v * right;
-        movX = glm::vec3(p.x, 0, 0) + dx;
-        glm::vec3 dy = v * onPlane;
-        movZ = glm::vec3(0, 0, p.z) + dy; 
-        	
-        glm::vec3 result = movX + movY + movZ ;            
+        //movY = glm::vec3(0, p.y, 0);
+        //float v = 0.1f * x;
+        //glm::vec3 dx = v * right;
+        //movX = glm::vec3(p.x, 0, 0) + dx;
+        //glm::vec3 dy = v * onPlane;
+        //movZ = glm::vec3(0, 0, p.z) + dy; 
+            
+        //glm::vec3 result = movX + movY + movZ ;            
         
-        m_objects[m_activeIdx]->m_position = result;
+        //m_objects[m_activeIdx]->m_position = result;
     }
 }
 
 void Scene::resetSelection()
 {
-    for(int i=0; i<m_objects.size(); ++i)
-    {
-        m_objects[i]->m_isSelected = false;
-    }
+    //for(int i=0; i<m_objects.size(); ++i)
+    //{
+    //    m_objects[i]->m_isSelected = false;
+    //}
 
     m_activeIdx = -1;
 
