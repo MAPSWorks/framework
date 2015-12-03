@@ -281,7 +281,7 @@ void OpenStreetMap::interpolateMap(){
 }
 
 // Rendering
-void OpenStreetMap::render(Shader* shader){
+void OpenStreetMap::render(unique_ptr<Shader>& shader){
     glm::mat4 model(1.0f);
 
     shader->setMatrix("matModel", model);

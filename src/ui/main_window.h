@@ -27,6 +27,7 @@ public:
     }
     
 	void showInformation(const string& information);
+    void updateScene();
     
 	const string& getWorkspace(void) const {return workspace_;}
     

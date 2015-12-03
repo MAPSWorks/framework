@@ -35,11 +35,18 @@ FrameBufferObject::~FrameBufferObject()
 
 void FrameBufferObject::bind()
 {
+    // Get previous framebuffer id
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &m_prevfboID);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
 }
 
 void FrameBufferObject::release()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, 
+                      m_prevfboID);
+}
+
+void FrameBufferObject::bindDefault(){
     glBindFramebuffer(GL_FRAMEBUFFER, 
             QOpenGLContext::currentContext()->defaultFramebufferObject());
 }
@@ -109,14 +116,14 @@ void FrameBufferObject::createTexAttachment(GLenum attachment,
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(GL_TEXTURE_2D,
-                0,
-                iFormat,
-                m_width,
-                m_height,
-                0,
-                format,
-                type,
-                NULL);
+                     0,
+                     iFormat,
+                     m_width,
+                     m_height,
+                     0,
+                     format,
+                     type,
+                     NULL);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
@@ -252,9 +259,11 @@ void FrameBufferObject::createDepthTexture(){
                         GL_FLOAT,
                         true);
     glBindTexture(GL_TEXTURE_2D, m_texAtts[GL_DEPTH_ATTACHMENT]);
+    
         // Clamp to border
         GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

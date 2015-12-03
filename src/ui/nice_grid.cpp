@@ -2,78 +2,26 @@
 #include "shader.h"
 #include "renderable_object.h"
 #include "texture.h"
-#include "mesh.h"
+#include "resource_manager.h"
 
 NiceGrid::NiceGrid(GLfloat size, GLfloat rep)
 : m_size(size),
   m_rep(rep),
-  m_texture(NULL),
   m_backFaceAlpha(0.2),
   m_ambient(0.12f, 0.12f, 0.1f),
   m_diffuse(1.0f, 1.0f, 0.9f),
-  m_vbo(NULL),
   m_position(0.0f, 0.0f, 0.0f)
 {
-
-    m_texture = new Texture("../data/floor_grey.png");
-    m_texture->setWrapMode(GL_REPEAT);
-
     createVBO();
 }
 
 NiceGrid::~NiceGrid()
 {
-    delete m_texture;
-
-    if (m_vbo != NULL) { 
-        delete m_vbo;
-    } 
 }
 
-void NiceGrid::render(Shader* shader)
+void NiceGrid::render(unique_ptr<Shader>& shader)
 {
-    glm::mat4 model(1.0);
-    model = glm::translate(model, m_position);
-
-    shader->bind();  
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_texture->id());    
-        shader->seti("tex", 0);    
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapID);    
-        shader->seti("shadowMap", 1); 
-
-        shader->set3f("lightPos", params::inst()->lightPos);
-        shader->set3f("lightDir", params::inst()->lightDir);
-        shader->set3f("camPos", params::inst()->camPos);
-        shader->set3f("diffuseColor", m_diffuse.x, m_diffuse.y, m_diffuse.z);
-        shader->set3f("ambientColor", m_ambient.x, m_ambient.z, m_ambient.z);
-        shader->setf("alpha", 1.0);
-        shader->seti("applyShadow", params::inst()->applyShadow);
-        shader->seti("renderMode", params::inst()->gridRenderMode);
-        shader->setf("shadowIntensity", params::inst()->shadowIntensity);
-        shader->set3f("attenuation", params::inst()->attenuation);
-        shader->set2f("lightCone", params::inst()->lightCone);
-
-        shader->setMatrix("matModel", model); 
-
-        glEnable(GL_CULL_FACE);    
-        glCullFace(GL_BACK);
-
-        m_vbo->render();
-
-        glCullFace(GL_FRONT);
-        shader->setf("alpha", m_backFaceAlpha);
-        shader->seti("renderMode", 1);
-
-        m_vbo->render();
-
-        glDisable(GL_CULL_FACE);    
-
-    shader->release();
-
+    m_vbo->render();
 }
 
 void NiceGrid::setAmbientColor(float r, float g, float b)
@@ -121,6 +69,6 @@ void NiceGrid::createVBO()
     data[5].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
     data[5].TexCoords = glm::vec2(0, m_rep);
 
-    m_vbo = new RenderableObject();
+    m_vbo.reset(new RenderableObject());
     m_vbo->setData(data, GL_TRIANGLES);
 }

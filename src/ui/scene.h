@@ -5,6 +5,7 @@
 #include "light.h"
 #include "trajectories.h"
 #include "openstreetmap.h"
+#include "model.h"
 
 class NiceGrid;
 class RenderableObject;
@@ -16,7 +17,7 @@ class TransformFeedback;
 class Scene
 {
 public:
-    Scene(CameraManager *camManager);
+    Scene(unique_ptr<CameraManager>& camManager);
     ~Scene();
    
     // Since there are some shared params for different drawing object. For example,
@@ -38,24 +39,22 @@ public:
     void resetSelection();
 
 public:
-    Light                     *m_light;
-    Trajectories              *m_trajectories;
-    OpenStreetMap             *m_osmMap;    
+    unique_ptr<Light>         m_light;
+    unique_ptr<Trajectories>  m_trajectories;
+    unique_ptr<OpenStreetMap> m_osmMap;    
 
 private:
+    unique_ptr<CameraManager>&      m_cameraManager;
 
-    // Shaders to draw various objects
-    map<string, Shader*>       m_shaders;
+    unique_ptr<NiceGrid>            m_niceGrid;
 
-    NiceGrid                  *m_niceGrid;
-    CameraManager             *m_cameraManager;
+    unique_ptr<Shader>              m_shaderNormal;
+    unique_ptr<Shader>              m_shaderDepth;
 
-    Shader                    *m_shaderNormal;
-    Shader                    *m_shaderDepth;
+    vector<unique_ptr<Object>>      m_objects;
+    unique_ptr<Model>               m_model;
 
-    vector<Object*>           m_objects;
-
-    int                       m_activeIdx;
+    int                             m_activeIdx;
 
 	//TransformFeedback *m_tfb;
 };

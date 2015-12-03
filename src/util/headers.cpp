@@ -8,17 +8,17 @@ Created by Chen Chen on 09/28/2015
 #include "headers.h"
 
 void resetBBOX(){
-    params::inst()->minBBOX = glm::vec3(1e10, 1e10, 1e10); 
-    params::inst()->maxBBOX = glm::vec3(-1e10, -1e10, -1e10);
+    params::inst().boundBox.bottomLeft = glm::vec3(1e10, 1e10, 1e10);
+    params::inst().boundBox.upperRight = glm::vec3(-1e10, -1e10, -1e10);
 }
 
 void updateBBOX(float minX, float maxX,
                 float minY, float maxY,
                 float minZ, float maxZ){
-    glm::vec3& minBBOX = params::inst()->minBBOX;
-    glm::vec3& maxBBOX = params::inst()->maxBBOX;
+    glm::vec3& minBBOX = params::inst().boundBox.bottomLeft;
+    glm::vec3& maxBBOX = params::inst().boundBox.upperRight;
 
-    params::inst()->bboxUpdated = true;
+    params::inst().boundBox.updated = true;
     if(minBBOX.x > minX) { 
         minBBOX.x = minX;
     } 
@@ -42,8 +42,8 @@ void updateBBOX(float minX, float maxX,
 }
 
 glm::vec3 BBOXNormalize(float x, float y, float z){
-    glm::vec3 minBBOX = params::inst()->minBBOX;
-    glm::vec3 maxBBOX = params::inst()->maxBBOX;
+    glm::vec3 minBBOX = params::inst().boundBox.bottomLeft;
+    glm::vec3 maxBBOX = params::inst().boundBox.upperRight;
 
     float lx = maxBBOX.x - minBBOX.x; 
     float ly = maxBBOX.y - minBBOX.y; 
@@ -117,10 +117,10 @@ void saveImage(QImage& img){
     QString fMinute = minute < 10 ? sNull + sMinute : sMinute;
     QString fSecond = second < 10 ? sNull + sSecond : sSecond;
 
-    QString fileName = sYear + fMonth + fDay + "_" + fHour + fMinute + fSecond + ".jpg";
+    QString fileName = sYear + fMonth + fDay + "_" + fHour + fMinute + fSecond + ".png";
 
-    img.save(fileName, "jpg", 100);
-    cout << "\tframe buffer saved to" << fileName.toStdString() << endl;
+    img.save(fileName, "png", 100);
+    cout << "\tframe buffer saved to " << fileName.toStdString() << endl;
 }
 
 void saveImage(QImage& img, int idx){
@@ -157,69 +157,6 @@ void saveImage(QImage& img, int idx){
 
     img.save(fileName, "png", 100);
     cout << "\tframe buffer saved to " << fileName.toStdString() << endl;
-}
-
-void getCameraFrame(const Transform &trans, 
-                    glm::vec3 &dir, 
-                    glm::vec3 &up, 
-                    glm::vec3 &right, 
-                    glm::vec3 &pos)
-{
-    glm::mat4 view = trans.view;
-
-    up = glm::vec3(view[1][0], view[1][1], view[1][2]);
-    up = glm::normalize(up);
-
-    right = glm::vec3(view[0][0], view[0][1], view[0][2]);
-    right = glm::normalize(right);
-    dir = glm::cross(up, right);
-
-    pos.x = -(view[0][0] * view[3][0] + view[0][1] * view[3][1] + view[0][2] * view[3][2]);
-    pos.y = -(view[1][0] * view[3][0] + view[1][1] * view[3][1] + view[0][2] * view[3][2]);
-    pos.z = -(view[2][0] * view[3][0] + view[2][1] * view[3][1] + view[0][2] * view[3][2]);
-
-}
-
-glm::vec3 getCamPosFromModelView(const Transform &trans)
-{
-    glm::mat4 m = trans.view;
-    glm::vec3 c;
-
-    glm::mat4 inv = glm::inverse(m);
-
-	/*c.x = -(m.a11 * m.a43 + m.a21 * m.a24 + m.a31 * m.a34);
-	c.y = -(m.a12 * m.a43 + m.a22 * m.a24 + m.a32 * m.a34);
-	c.z = -(m.a13 * m.a43 + m.a23 * m.a24 + m.a33 * m.a34);*/
-
-	c.x = inv[0][3];
-	c.y = inv[1][3];
-	c.z = inv[2][3];
-
-	return c;
-}
-
-glm::vec3 getViewDirFromModelView(const Transform &trans)
-{
-    glm::mat4 m = trans.view;
-    glm::vec3 c;
-
-	c.x = -m[2][0];
-	c.y = -m[2][1];
-	c.z = -m[2][2];
-
-	return glm::normalize(c);
-}
-
-glm::vec3 getUpDirFromModelView(const Transform &trans)
-{
-    glm::mat4 m = trans.view;
-    glm::vec3 c;
-
-	c.x = m[1][0];
-	c.y = m[1][1];
-	c.z = m[1][2];
-
-	return glm::normalize(c);
 }
 
 void checkGLError(){
@@ -279,21 +216,75 @@ void checkGLVersion()
     cout << extList.size() << "Extentions listed!" << endl;
 }
 
-void colorMap(float x, vector<float>& out, vector<float>& cm){
-    x = clamp(x*63, 0.f, 63.f - (float)1e-6);
-    int idx = int(x);
-    float r = fract(x);
-    out[0] = cm[idx*3+0]*(1-r) + cm[(idx+1)*3+0]*r;
-    out[1] = cm[idx*3+1]*(1-r) + cm[(idx+1)*3+1]*r;
-    out[2] = cm[idx*3+2]*(1-r) + cm[(idx+1)*3+2]*r;
+void getCameraFrame(const Transform &trans, 
+                    glm::vec3 &dir, 
+                    glm::vec3 &up, 
+                    glm::vec3 &right, 
+                    glm::vec3 &pos)
+{
+    glm::mat4 view = trans.matView;
+
+    up = glm::vec3(view[1][0], view[1][1], view[1][2]);
+    up = glm::normalize(up);
+
+    right = glm::vec3(view[0][0], view[0][1], view[0][2]);
+    right = glm::normalize(right);
+    dir = glm::cross(up, right);
+
+    pos.x = -(view[0][0] * view[3][0] + view[0][1] * view[3][1] + view[0][2] * view[3][2]);
+    pos.y = -(view[1][0] * view[3][0] + view[1][1] * view[3][1] + view[0][2] * view[3][2]);
+    pos.z = -(view[2][0] * view[3][0] + view[2][1] * view[3][1] + view[0][2] * view[3][2]);
+
 }
 
-void colorMapBgr(float x, vector<float>& out, vector<float>& cm)
-{
-    x = clamp(x*63, 0.f, 63.f - (float)1e-6);
-    int idx = int(x);
-    float r = fract(x);
-    out[2] = cm[idx*3+0]*(1-r) + cm[(idx+1)*3+0]*r;
-    out[1] = cm[idx*3+1]*(1-r) + cm[(idx+1)*3+1]*r;
-    out[0] = cm[idx*3+2]*(1-r) + cm[(idx+1)*3+2]*r;
+// Return random float between -0.5 and 0.5
+float jitter() {
+    return ((float)rand() / RAND_MAX) - 0.5f;
+}
+
+void buildOffsetTex(int texSize, int samplesU, int samplesV){
+    int size = texSize;
+    int samples = samplesU * samplesV;
+    int bufSize = size * size * samples * 2;
+    vector<float> data(bufSize);
+    float TWOPI = 2.0f * 3.1415926;
+    for( int i = 0; i< size; i++ ) {
+        for(int j = 0; j < size; j++ ) {
+            for( int k = 0; k < samples; k += 2 ) {
+                int x1,y1,x2,y2;
+                x1 = k % (samplesU);
+                y1 = (samples - 1 - k) / samplesU;
+                x2 = (k+1) % samplesU;
+                y2 = (samples - 1 - k - 1) / samplesU;
+                glm::vec4 v;
+                // Center on grid and jitter
+                v.x = (x1 + 0.5f) + jitter();
+                v.y = (y1 + 0.5f) + jitter();
+                v.z = (x2 + 0.5f) + jitter();
+                v.w = (y2 + 0.5f) + jitter();
+                // Scale between 0 and 1
+                v.x /= samplesU;
+                v.y /= samplesV;
+                v.z /= samplesU;
+                v.w /= samplesV;
+                // Warp to disk
+                int cell = ((k/2) * size * size + j * size + i) * 4;
+                data[cell+0] = sqrtf(v.y) * cosf(TWOPI*v.x);
+                data[cell+1] = sqrtf(v.y) * sinf(TWOPI*v.x);
+                data[cell+2] = sqrtf(v.w) * cosf(TWOPI*v.z);
+                data[cell+3] = sqrtf(v.w) * sinf(TWOPI*v.z);
+            } 
+        }
+    }
+    glActiveTexture(GL_TEXTURE1);
+    GLuint texID;
+    glGenTextures(1, &texID);
+    params::inst().shadowInfo.offsetTexID = texID;
+    glBindTexture(GL_TEXTURE_3D, texID);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, size, size,
+                 samples/2, 0, GL_RGBA, GL_FLOAT, &data[0]);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER,
+                    GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER,
+                    GL_NEAREST);
 }

@@ -20,7 +20,7 @@ public:
    NiceGrid(GLfloat size, GLfloat rep);
    ~NiceGrid();
 
-   void render(Shader* shader);
+   void render(unique_ptr<Shader>& shader);
    void setAmbientColor(float r, float g, float b);  
    void setDiffuseColor(float r, float g, float b);
 
@@ -32,8 +32,7 @@ private:
     GLfloat                   m_size;
     GLfloat                   m_rep;
 
-    Texture                   *m_texture;
-    RenderableObject          *m_vbo;
+    unique_ptr<RenderableObject> m_vbo;
 
     glm::vec3                 m_ambient;
     glm::vec3                 m_diffuse;

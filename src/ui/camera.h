@@ -88,7 +88,7 @@ class Camera {
         void determineMovement();
 
         // Show camera
-        void render(Shader* shader);
+        void render(unique_ptr<Shader>& shader);
         void renderFrames();
         void renderSpline();
 
@@ -157,7 +157,7 @@ class Camera {
 
         // Visualize camera
         bool                      m_renderFrustum;
-        Frustum                   *m_frustum;
+        unique_ptr<Frustum>       m_frustum;
 };
 
 #endif /* end of include guard: CAMERA_H_ */

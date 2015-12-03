@@ -16,7 +16,7 @@ public:
            const glm::vec4 &color = glm::vec4(1, 1, 1, 1));
     ~Object();
 
-    void render(Shader* shader);
+    void render(unique_ptr<Shader>& shader);
 
     bool             m_isSelected;
     glm::vec3        m_min;

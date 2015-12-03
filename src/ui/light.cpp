@@ -1,7 +1,5 @@
 #include "light.h"
 #include "camera_manager.h"
-#include "renderable_object.h"
-#include "mesh.h"
 #include "shader.h"
 #include "scene.h"
 #include "framebuffer_object.h"
@@ -20,82 +18,66 @@ Light::Light(Scene *scene, const glm::vec3 &pos)
     m_distance(1.0f),
     m_movement(0.0f),
     m_moved(true),
-    m_ncpLight(1.0f),
-    m_fcpLight(500.0f),
-    m_fovLight(90.0f),
     m_bufferWidth(2048),
     m_bufferHeight(2048)
 {
+    m_ncpLight = 1.0f;
+    m_fcpLight = 5.0f * params::inst().scale;
+    m_fovLight = 90.0f;
+
     loadPaths();
 
     // Light Objects
-    m_vbo = Mesh::sphere(0.5f, 4, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    m_vboBlur = Mesh::quad(0, 0, m_bufferWidth, m_bufferHeight);
+    m_vbo = RenderableObject::sphere(1.0f, 
+                                     4, 
+                                     glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-    m_fboLight = new FrameBufferObject(m_bufferWidth, m_bufferHeight);
+    m_fboLight.reset(new FrameBufferObject(m_bufferWidth, m_bufferHeight));
     m_fboLight->createDepthTexture();
+    params::inst().shadowInfo.shadowMapID = m_fboLight->texAttachment(GL_DEPTH_ATTACHMENT);
 }
 
-Light::~Light()
-{
-    delete m_vbo;
-    delete m_vboBlur;
-
-    delete m_fboLight;
+Light::~Light(){
 }
 
-void Light::renderLightView(glm::mat4 &lightView, 
-                            GLuint &shadowMapID, 
-                            GLuint &shadowMapBlurredID)
-{
-    if(m_moved)
-    {
-        // Directional light 
-        glm::mat4 projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f); 
-        glm::mat4 view = glm::lookAt(m_position, glm::vec3(0.0f), glm::vec3(1.0));
+void Light::renderLightView(Transform &trans){
+    //glm::mat4 projection = glm::perspective(glm::radians(m_fovLight), 
+    //                                        (float)m_bufferWidth/(float)m_bufferHeight, 
+    //                                        1.0f, 
+    //                                        2.5f * params::inst().scale);
+    glm::mat4 projection = glm::ortho(-params::inst().scale, 
+                                      params::inst().scale, 
+                                      -params::inst().scale, 
+                                      params::inst().scale, 
+                                      1.0f, 
+                                      5.0f * params::inst().scale);
+    m_direction = glm::normalize(-m_position);
+    glm::mat4 view = glm::lookAt(m_position, 
+                                 m_position + m_direction, 
+                                 glm::vec3(0.0f, 1.0f, 0.0f));
 
-        params::inst()->lightPos = m_position;
-        glm::vec3 vec = -m_position;
-        
-        params::inst()->lightDir = glm::normalize(vec);
+    Transform transLight;
+    transLight.matView           = view;
+    transLight.matProjection     = projection;
+    transLight.matViewProjection = projection * view;
+    m_lightSpace                 = transLight.matViewProjection;
 
-        //glm::mat4 projection = glm::perspective(m_fovLight, (float)m_bufferWidth/(float)m_bufferHeight, m_ncpLight, m_fcpLight);
-        //glm::mat4 view = glm::lookAt(m_position, glm::vec3(0.0, 5.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    // Render depth map
+    glViewport(0, 0, m_bufferWidth, m_bufferHeight);
+    m_fboLight->bind();
+        glClear(GL_DEPTH_BUFFER_BIT);     
+        m_scene->renderObjectsDepth(transLight);        
+    m_fboLight->release();
+    glViewport(0, 0, params::inst().windowSize.x, params::inst().windowSize.y);
 
-        Transform transLight;
-        transLight.view = view; 
-        transLight.projection = projection;
-        transLight.viewProjection = projection * view;
-        transLight.lightView = projection * view;
-
-        glViewport(0, 0, m_bufferWidth, m_bufferHeight);
-        m_fboLight->bind();
-
-            glClear(GL_DEPTH_BUFFER_BIT);     
-
-            m_scene->renderObjectsDepth(transLight);        
-
-        m_fboLight->release();
-        glViewport(0, 0, params::inst()->windowSize.x, params::inst()->windowSize.y);
-
-        m_lightView = transLight.lightView;
-        lightView = m_lightView;
-
-        shadowMapID = m_fboLight->texAttachment(GL_DEPTH_ATTACHMENT);
-
-        m_moved = false;
-    }
-    else
-    {
-        lightView = m_lightView;
-    }
+    // Update trans
+    trans.matLightSpace = m_lightSpace;
 }
 
-void Light::render(Shader* shader)
+void Light::render(unique_ptr<Shader>& shader)
 {
     glm::mat4 model(1.0);
     model = glm::translate(model, m_position);
-
     shader->setMatrix("matModel", model); 
     m_vbo->render();
 }
@@ -117,29 +99,24 @@ void Light::autoMove()
     {
         m_position.x = cosf(m_angle) * m_radius;
         m_position.z = sinf(m_angle) * m_radius;
-
         m_angle += m_movement;
     }
 
     if(m_moveMode == 2)
     {
         m_time += m_movement * 0.1;
-
         if(m_time > 1.0f)
             m_time = 0.0f;
-
-        glm::vec3 p = m_spline.interpolatedPoint(m_time);
-
-        m_position = p;
+        //glm::vec3 p = m_spline.interpolatedPoint(m_time);
+        //m_position = p;
     }    
 }
 
-void Light::move(CameraManager *camManager, float diffX, float diffY)
+void Light::move(unique_ptr<CameraManager>& camManager, float diffX, float diffY)
 {
     if(m_moveMode == 0)
     {
         Transform trans;	
-
         glm::vec3 dir;
         glm::vec3 right;
         glm::vec3 up;
@@ -158,8 +135,8 @@ void Light::move(CameraManager *camManager, float diffX, float diffY)
 
         glm::vec3 result = movX + movY + movZ;
 
-        float clamped_x = clamp(result.x, -50.0f, 50.0f);
-        float clamped_z = clamp(result.z, -50.0f, 50.0f);
+        float clamped_x = clamp(result.x, -params::inst().scale, params::inst().scale);
+        float clamped_z = clamp(result.z, -params::inst().scale, params::inst().scale);
 
         m_position = glm::vec3(clamped_x, result.y, clamped_z);
 
@@ -175,7 +152,6 @@ void Light::move(CameraManager *camManager, float diffX, float diffY)
                 m_curPath.positions.push_back(m_position);
             }
         }
-
         m_moved = true;
     }
 }
@@ -312,11 +288,11 @@ void Light::toggleMode()
 
     if(m_moveMode == 2)
     {
-        m_spline.clear();
-        for(uint i=0; i<m_curPath.positions.size(); ++i)
-        {
-            m_spline.addPoint(m_curPath.positions[i]);
-        }
+        //m_spline.clear();
+        //for(uint i=0; i<m_curPath.positions.size(); ++i)
+        //{
+        //    m_spline.addPoint(m_curPath.positions[i]);
+        //}
 
         m_time = 0;
     }

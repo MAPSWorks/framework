@@ -8,6 +8,7 @@
 #ifndef SCENE_WIDGET_H_
 #define SCENE_WIDGET_H_
 
+#include <QOpenGLFramebufferObject>
 #include "headers.h"
 
 using namespace std;
@@ -42,6 +43,9 @@ protected:
     void paintGL();
     void resizeGL(int width, int height);
 
+    // Save framebuffer
+    void saveWindow();
+
     // Mouse event
     void wheelEvent(QWheelEvent *event);
     void mousePressEvent(QMouseEvent *event);
@@ -57,34 +61,32 @@ protected:
     void initParams();    
 
 private:
-    QTimer               *m_timer;
-    QPoint               m_mouse;
-    
-    bool                 m_leftButton;
-    bool                 m_rightButton;
-	bool                 m_ctrlPressed;
-	bool                 m_altPressed;
-	bool                 m_shiftPressed;
-    bool                 m_noOtherKey;
-    bool                 m_renderOffline;
+    unique_ptr<QTimer>          m_timer;
+    QPoint                      m_mouse;
 
-    int                  m_width;
-    int                  m_height;
-    int                  m_frameNr;
+    bool                        m_renderOffline;
+    unique_ptr<QOpenGLFramebufferObject>    m_fbo;
+    
+    bool                        m_leftButton;
+    bool                        m_rightButton;
+	bool                        m_ctrlPressed;
+	bool                        m_altPressed;
+	bool                        m_shiftPressed;
+    bool                        m_noOtherKey;
+
+    int                         m_width;
+    int                         m_height;
+    int                         m_frameNr;
 
     // Camera transform
-    Transform            m_trans;
+    Transform                   m_trans;
 
-    // m_lastFrameTime is used for counting time for animation
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_lastFrameTime;
+    unique_ptr<Scene>           m_scene;
+    unique_ptr<CameraManager>   m_cameraManager;
+    unique_ptr<Renderer>        m_renderer;
 
-    Scene                *m_scene;
-    CameraManager        *m_cameraManager;
-    Renderer             *m_renderer;
-
-    unique_ptr<QMenu>    m_doubleClickMenu;
-    bool                 m_openingFile; // Stop updating drawing while opening files
-
+    unique_ptr<QMenu>           m_doubleClickMenu;
+    bool                        m_openingFile; // Stop updating drawing while opening files
 };
 
 #endif //SCENE_WIDGET_H_

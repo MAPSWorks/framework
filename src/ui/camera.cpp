@@ -5,48 +5,47 @@
 #include "renderable_object.h"
 
 Camera::Camera(glm::vec3 pos,
-        float     heading,
-        float     pitch,
-        float     roll,
-        float     fov,
-        float     ncp,
-        float     fcp)
-    : m_heading(heading),
-    m_pitch(pitch),
-    m_roll(roll),
-    m_fov(fov),
-    m_ncp(ncp),
-    m_fcp(fcp),
-    m_aspect(1.3f),
-    m_lerpFactor(0.0f),
-    m_locked(false),
-    m_pos(pos),
-    m_dir(0.0f, 0.0f, -1.0f),
-    m_up(0.0f, 1.0f, 0.0f),
-    m_right(1.0f, 0.0f, 0.0f),
-    m_strafe(0.0f, 0.0f, 0.0f),
-    m_cameraColor(1.0f, 1.0f, 0.0f),
-    m_moveSpeed(0.01f),
-    m_forwardSpeed(0.0f),
-    m_strafeSpeed(0.0f),
-    m_timer(0.0f),
-    m_time(0.0f),
-    m_timerDiff(0.0f),
-    m_secsPerFrame(0.0f),
-    m_desiredDistance(4.0f),
-    m_movementValue(0.0f),
-    m_interpolate(false),
-    m_idxInterpolOld(0),
-    m_idxInterpolNew(1),
-    m_activeFrameSet(0),
-    m_activeFrameSetName("No Set Available"),
-    m_renderFrustum(true),
-    m_frustum(nullptr)
+               float     heading,
+               float     pitch,
+               float     roll,
+               float     fov,
+               float     ncp,
+               float     fcp)
+: m_heading(heading),
+  m_pitch(pitch),
+  m_roll(roll),
+  m_fov(fov),
+  m_ncp(ncp),
+  m_fcp(fcp),
+  m_aspect(1.3f),
+  m_lerpFactor(0.0f),
+  m_locked(false),
+  m_pos(pos),
+  m_dir(0.0f, 0.0f, -1.0f),
+  m_up(0.0f, 1.0f, 0.0f),
+  m_right(1.0f, 0.0f, 0.0f),
+  m_strafe(0.0f, 0.0f, 0.0f),
+  m_cameraColor(1.0f, 1.0f, 0.0f),
+  m_moveSpeed(0.01f),
+  m_forwardSpeed(0.0f),
+  m_strafeSpeed(0.0f),
+  m_timer(0.0f),
+  m_time(0.0f),
+  m_timerDiff(0.0f),
+  m_secsPerFrame(0.0f),
+  m_desiredDistance(4.0f),
+  m_movementValue(0.0f),
+  m_interpolate(false),
+  m_idxInterpolOld(0),
+  m_idxInterpolNew(1),
+  m_activeFrameSet(0),
+  m_activeFrameSetName("No Set Available"),
+  m_renderFrustum(true)
 {
     m_conf = PERSPECTIVE;
 
     // Draw camera frustum
-    m_frustum = new Frustum();
+    m_frustum.reset(new Frustum());
     m_frustum->setCamInternals(m_fov, m_aspect, 0.2f, 1.2f);
 
     // Camera spline
@@ -65,10 +64,6 @@ Camera::Camera(glm::vec3 pos,
 }
 
 Camera::~Camera(){
-    if(m_frustum) { 
-        delete m_frustum;
-    } 
-
     if(m_spline) { 
         delete m_spline; 
     } 
@@ -95,27 +90,30 @@ void Camera::update(){
     m_projection = glm::mat4(1.0f);
 
     if (m_conf == PERSPECTIVE) { 
-        m_projection = glm::perspective(m_fov, m_aspect, m_ncp, m_fcp);
+        // Perspective Camera
+        m_projection = glm::perspective(m_fov, 
+                                        m_aspect, 
+                                        m_ncp, 
+                                        m_fcp);
     } 
     else{
+        // Orthogonal Camera
     }
 
     // Make the Quaternions that will represent our rotations
     m_qPitch = glm::angleAxis(glm::radians(m_pitch), glm::vec3(1.0f, 0.0f, 0.0f));
     m_qHeading = glm::angleAxis(glm::radians(m_heading), glm::vec3(0.0f, 1.0f, 0.0f));
     m_qRoll = glm::angleAxis(glm::radians(m_roll), glm::vec3(0.0f, 0.0f, 1.0f));
-
     glm::quat q = m_qPitch * m_qHeading * m_qRoll;
+
     m_up = glm::rotate(q, glm::vec3(0.0f, 1.0f, 0.0f));
     m_dir = glm::rotate(q, glm::vec3(0.0f, 0.0f, 1.0f));
 
     m_view = glm::lookAt(m_pos, m_pos + m_dir, m_up);
-
     m_right = glm::cross(m_dir, m_up);
 
     // Update camera frustum
     m_frustum->setCamDef(m_pos, m_dir, m_up);
-
     m_strafe = m_right * m_strafeSpeed;
     m_dir = m_dir * m_forwardSpeed;
 
@@ -153,9 +151,9 @@ void Camera::changeRoll(float degrees){
 void Camera::getMatrices(Transform &trans){
     update();
 
-    trans.view = m_view;
-    trans.projection = m_projection;
-    trans.viewProjection = m_projection * m_view;
+    trans.matView           = m_view;
+    trans.matProjection     = m_projection;
+    trans.matViewProjection = m_projection * m_view;
 }
 
 glm::vec3 Camera::position() const
@@ -552,7 +550,7 @@ void Camera::determineMovement(){
     m_timer = m_hpTimer.time();
 }
 
-void Camera::render(Shader* shader){
+void Camera::render(unique_ptr<Shader>& shader){
     glm::mat4 model(1.0f);
     shader->setMatrix("matModel", model);
 

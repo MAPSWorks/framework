@@ -19,14 +19,16 @@ SceneWidget::SceneWidget(QWidget* parent)
     m_noOtherKey(true),
     m_renderOffline(false),
     m_frameNr(0),
-    m_lastFrameTime(std::chrono::high_resolution_clock::now()),
     m_doubleClickMenu(new QMenu),
-    m_openingFile(false)
+    m_openingFile(false),
+    m_fbo(nullptr)
 {
     // update drawing at least every 25ms
     //m_timer = new QTimer(this);
     //connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
     //m_timer->start(25); 
+    
+    //connect(Shader, SIGNAL(shaderUpdated()), this, SLOT(update()));
 
     this->resize(this->width(), this->height());
     this->setFocus();
@@ -46,16 +48,6 @@ SceneWidget::~SceneWidget(){
     //m_timer->stop();
     //if(m_timer)
     //    delete m_timer;
-
-    if(m_scene) { 
-        delete m_scene; 
-    } 
-    if(m_cameraManager) { 
-        delete m_cameraManager; 
-    } 
-    if(m_renderer){
-        delete m_renderer;
-    }
 }
 
 /*=====================================================================================
@@ -142,7 +134,7 @@ void SceneWidget::slotClear(){
         m_scene->m_osmMap->clear();
     } 
     resetBBOX();
-    params::inst()->bboxUpdated = true;
+    params::inst().boundBox.updated = true;
 }
 
 /*=====================================================================================
@@ -152,54 +144,32 @@ void SceneWidget::slotClear(){
 void SceneWidget::initializeGL(){
     initParams();
 
-    m_cameraManager = new CameraManager();
-    m_scene         = new Scene(m_cameraManager);
-    m_renderer      = new Renderer(m_scene, m_cameraManager);
+    m_cameraManager.reset(new CameraManager());
+    m_scene.reset(new Scene(m_cameraManager));
+    m_renderer.reset(new Renderer(m_scene, m_cameraManager));
 
+    // Default GL context
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-
-    glEnable(GL_SAMPLE_SHADING);
-    glMinSampleShading(0.0f);
-    
 }
 
 void SceneWidget::initParams(){
-    params::inst()->lightPos            = glm::vec3(0.0f, 0.0f, 0.0f);
-    params::inst()->lightDir            = glm::vec3(0.0f, 0.0f, 0.0f);
-    params::inst()->camPos              = glm::vec3(0.0f, 0.0f, 0.0f);
-    params::inst()->attenuation         = glm::vec3(0.5f, 0.0f, 0.0f);
-    params::inst()->lightCone           = glm::vec2(0.0f, 0.0f);
-    params::inst()->blur                = glm::vec2(4.0f, 2.0f);
-    params::inst()->windowSize          = glm::vec2(m_width, m_height);
+    // Initialize global parameters, and build a 3D random offset texture for soft shadow
+    params::inst().windowSize          = glm::vec2(m_width, m_height);
+    params::inst().polygonMode         = 0;
+    params::inst().gridRenderMode      = 0;
+    params::inst().scale               = 100.0f;
 
-    params::inst()->clipPlaneGround     = glm::vec4(0.0f, -1.0f, 0.0f, 4.0f);
-
-    params::inst()->gridRenderMode      = 0;
-    params::inst()->polygonMode         = 0;
-
-    params::inst()->applyShadow         = true;
-    params::inst()->renderMesh          = false;
-    params::inst()->renderObjects       = true;
-
-    params::inst()->shadowIntensity     = 0.4f;
-    params::inst()->depthRangeMax       = 1.0f;
-    params::inst()->depthRangeMin       = 0.0f;
-    params::inst()->polygonOffsetFactor = 0.0f;
-    params::inst()->polygonOffsetUnits  = 0.0f;
-    params::inst()->ncp                 = 0.0f;
-    params::inst()->fcp                 = 0.0f;
-    params::inst()->fov                 = 0.0f;
-
-    params::inst()->shadowMapID         = 0;
-    params::inst()->shadowMapBlurredID  = 0;
-
+    params::inst().shadowInfo.applyShadow = true;
+    buildOffsetTex(params::inst().shadowInfo.texSize,
+                   params::inst().shadowInfo.texSamplesU,
+                   params::inst().shadowInfo.texSamplesV);
 }
 
 void SceneWidget::paintGL(){
@@ -207,22 +177,32 @@ void SceneWidget::paintGL(){
     const qreal retina_scale = devicePixelRatio();
     m_width = this->width() * retina_scale;
     m_height = this->height() * retina_scale;
-    params::inst()->windowSize.x = m_width;
-    params::inst()->windowSize.y = m_height;
+    params::inst().windowSize = glm::vec2(m_width, m_height);
+
     glViewport(0, 0, m_width, m_height);
 
-    // Update scene in case of animation
-    std::chrono::time_point<std::chrono::high_resolution_clock> cur_time = std::chrono::high_resolution_clock::now();
-    float delta = std::chrono::duration_cast<std::chrono::milliseconds>(cur_time - m_lastFrameTime).count();
-    m_lastFrameTime = cur_time;
-
     if(!m_openingFile) { 
-        m_scene->update(delta);
         m_cameraManager->currentMatrices(m_trans);
     } 
 
     // This will render the scene
     m_renderer->render(m_trans);
+
+    if(m_renderOffline) { 
+        if(m_fbo == nullptr || m_width != m_fbo->width() || m_height != m_fbo->height()) { 
+            m_fbo.reset(new QOpenGLFramebufferObject(m_width, 
+                                                     m_height, 
+                                                     QOpenGLFramebufferObject::CombinedDepthStencil,
+                                                     GL_TEXTURE_2D, 
+                                                     GL_RGBA8));
+        }
+        m_fbo->bind();
+        m_renderer->render(m_trans);
+        QImage img = m_fbo->toImage();
+        saveImage(img);
+        m_fbo->release();
+        m_renderOffline = false;
+    } 
 }
 
 void SceneWidget::resizeGL(int width, int height){
@@ -230,8 +210,14 @@ void SceneWidget::resizeGL(int width, int height){
     m_width = width * retina_scale;
     m_height = height * retina_scale;
 
+    params::inst().windowSize = glm::vec2(m_width, m_height);
     m_renderer->resize(m_width, m_height);
     m_cameraManager->resize(m_width, m_height);
+}
+
+void SceneWidget::saveWindow(){
+    m_renderOffline = true;
+    update();
 }
 
 /*
@@ -354,14 +340,19 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         case Qt::Key_I:
             m_cameraManager->toggleInterpolation();
             break;
-        case Qt::Key_P:
-            loop(params::inst()->gridRenderMode, 0, 3);
-            break;
         case Qt::Key_U:
-            params::inst()->applyShadow = !params::inst()->applyShadow;
+            params::inst().shadowInfo.applyShadow = !params::inst().shadowInfo.applyShadow;
             break;
         case Qt::Key_Space:
-            loop(params::inst()->polygonMode, 0, 1, 1);
+            loop(params::inst().polygonMode, 0, 2, 1);
+            break;
+        case Qt::Key_S:
+            if(m_ctrlPressed) { 
+                saveWindow();
+            } 
+            break;
+        case Qt::Key_P:
+            loop(params::inst().gridRenderMode, 0, 3, 1);
             break;
         case Qt::Key_Q:
             MainWindow::getInstance().close();
@@ -379,10 +370,9 @@ void SceneWidget::keyPressEvent(QKeyEvent* event){
         //    m_cameraManager->toggleCameraMode();
         //    break;
 
-        //case Qt::Key_Control:
-        //    m_ctrlPressed = true;
-        //    m_noOtherKey = false;
-        //    break;
+        case Qt::Key_Control:
+              m_ctrlPressed = true;
+            break;
         //case Qt::Key_Alt:
         //    m_altPressed = true;
         //    m_noOtherKey = false;
@@ -401,10 +391,9 @@ void SceneWidget::keyReleaseEvent(QKeyEvent* event){
 
     switch (event->key()) 
     {
-        //case Qt::Key_Control:
-        //    m_ctrlPressed = false;
-        //    m_noOtherKey = true;
-        //    break;
+        case Qt::Key_Control:
+            m_ctrlPressed = false;
+            break;
         //case Qt::Key_Alt:
         //    m_altPressed = false;
         //    m_noOtherKey = true;

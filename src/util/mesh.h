@@ -2,39 +2,74 @@
 #define MESH_H
 
 #include "headers.h"
-
-class RenderableObject;
+#include "shader.h"
 
 class Mesh
 {
-public:
-   Mesh();
-   ~Mesh();
+    public:
+        struct Vertex{
+            glm::vec3   Position  = glm::vec3(0.0f, 0.0f, 0.0f);             // Coordinate
+            glm::vec3   Normal    = glm::vec3(0.0f, 0.0f, 0.0f);             // Normal vector
+            glm::vec4   Color     = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);       // RGBA color
+            glm::vec2   TexCoords = glm::vec2(0.0f, 0.0f);                   // Texture coordinate
+        };
 
-   static vector<RenderableObject *> obj(const QString &fileName, const glm::vec3 &rot = glm::vec3(0.0f, 0.0f, 0.0f), const glm::vec3 &scale = glm::vec3(1.0f, 1.0f, 1.0f), GLenum primitive = GL_TRIANGLES);
-   static vector<RenderableObject*> obj(QString fileName);
-   static RenderableObject *quadLines(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4());
-   static RenderableObject *quad(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
-   static RenderableObject *quad(int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
-   static RenderableObject *sphere(float radius, int iterations, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
-   static RenderableObject *box(const glm::vec3 &mi, const glm::vec3 &ma, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+        struct Texture{
+            GLuint id;
+            string type;
+            string path;
+        };
 
-private:
-    typedef struct 
-    {
-       double x,y,z;
-    } XYZ;
-    
-    typedef struct 
-    {
-       glm::vec3 p1,p2,p3;
-    } FACET3;
+        // std::move semantics
+        Mesh(Mesh&& x){
+            m_vao = x.m_vao;
+            m_vbo = x.m_vbo;
+            m_ebo = x.m_ebo;
+            m_vertices = std::move(x.m_vertices);
+            m_indices = std::move(x.m_indices);
+            m_textures = std::move(m_textures);
+        }
+        Mesh& operator=(Mesh&& x){
+            if(this != &x){
+                m_vao = x.m_vao;
+                m_vbo = x.m_vbo;
+                m_ebo = x.m_ebo;
+                m_vertices = std::move(x.m_vertices);
+                m_indices = std::move(x.m_indices);
+                m_textures = std::move(m_textures);
+            }
+            return *this;
+        }
 
-    //Paul Bourke Sphere http://paulbourke.net/miscellaneous/sphere_cylinder/
-    static int createNSphere(FACET3 *f, int iterations);
-    static int CreateUnitSphere(FACET3 *facets, int iterations);
-    static glm::vec3 MidPoint(glm::vec3 p1, glm::vec3 p2);
+        Mesh();
+        ~Mesh();
 
+        Mesh(vector<Vertex>     vertices,
+             vector<GLuint>     indices,
+             vector<Texture>    textures);
+        
+        void setData(vector<Vertex>  vertices,
+                     vector<GLuint>  indices,
+                     vector<Texture> textures);
+
+        // Render
+        void render(unique_ptr<Shader>& shader);
+
+    private:
+        // Disable copying
+        Mesh(const Mesh&) = delete;
+        Mesh& operator=(const Mesh&) = delete;
+
+        GLuint                           m_vao;
+        GLuint                           m_vbo;
+        GLuint                           m_ebo;
+
+        /*  Mesh Data  */
+        vector<Vertex>                   m_vertices;
+        vector<GLuint>                   m_indices;
+        vector<Texture>                  m_textures;
+
+        void setupMesh();
 };
 
 #endif

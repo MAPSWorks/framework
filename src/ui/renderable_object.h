@@ -70,21 +70,39 @@ public:
     RenderableObject();
     ~RenderableObject();
 
+    RenderableObject(RenderableObject&& x) = default;
+    RenderableObject& operator=(RenderableObject&& x) = default;
+
     void render();
     
     // Setup vertex data
         // Without element buffer
-    void setData(const vector<Vertex>& data,
+    void setData(vector<Vertex> data,
                  GLenum primitiveMode,
                  GLenum usage = GL_STATIC_DRAW);
 
         // With element buffer
-    void setData(const vector<Vertex>& data,
-                 const vector<GLuint>& indices,
+    void setData(vector<Vertex> data,
+                 vector<GLuint> indices,
                  GLenum primitiveMode,
                  GLenum usage = GL_STATIC_DRAW);
 
+    // Static functions that create common renderable objects.
+    static unique_ptr<RenderableObject> quadLines(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4()); 
+    static unique_ptr<RenderableObject> quad(int startX, int startY, int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+    static unique_ptr<RenderableObject> quad(int width, int height, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+    static unique_ptr<RenderableObject> box(const glm::vec3 &mi, const glm::vec3 &ma, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+    static unique_ptr<RenderableObject> sphere(float radius, int iterations, const glm::vec4 &color = glm::vec4(), GLenum primitive = GL_TRIANGLES);
+
 private:
+    // Disable copying
+    RenderableObject(const RenderableObject&);
+    RenderableObject& operator=(const RenderableObject&); 
+
+    // Data
+    vector<Vertex>                m_vertices;
+    vector<GLuint>                m_indices;
+
     // Private functions
     void bind();
     void release();
@@ -98,6 +116,21 @@ private:
     GLenum                        m_primitiveMode;  // GL_POINTS, GL_LINES, etc.
 
     int                           m_nVertices;
+
+    typedef struct 
+    {
+        double x,y,z;
+    } XYZ;
+
+    typedef struct 
+    {
+        glm::vec3 p1,p2,p3;
+    } FACET3;
+
+    //Paul Bourke Sphere http://paulbourke.net/miscellaneous/sphere_cylinder/
+    static int createNSphere(vector<FACET3>& f, int iterations);
+    static int CreateUnitSphere(vector<FACET3>& facets, int iterations);
+    static glm::vec3 MidPoint(glm::vec3 p1, glm::vec3 p2);
 };
 
 #endif

@@ -41,6 +41,7 @@ class FrameBufferObject
 
         void bind();
         void release();
+        void bindDefault();
 
         GLuint id() const;    
 
@@ -85,6 +86,7 @@ class FrameBufferObject
     private:
         GLuint m_width;
         GLuint m_height;
+        GLint  m_prevfboID;
 
         GLuint m_fboID;
 

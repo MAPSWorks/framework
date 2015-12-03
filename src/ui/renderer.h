@@ -14,8 +14,8 @@ class Texture;
 class Renderer
 {
 public:
-    Renderer(Scene *scene, 
-             CameraManager *camManager);
+    Renderer(unique_ptr<Scene>& scene, 
+             unique_ptr<CameraManager>& camManager);
 
     ~Renderer();
 
@@ -31,8 +31,8 @@ private:
     void renderScene(const Transform &trans);
 
 private:
-	Scene *m_scene;
-    CameraManager *m_cameraManager;
+	unique_ptr<Scene>& m_scene;
+    unique_ptr<CameraManager>& m_cameraManager;
 
     int m_width;
     int m_height;

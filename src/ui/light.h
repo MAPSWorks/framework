@@ -3,6 +3,7 @@
 
 #include "headers.h"
 #include "spline.h"
+#include "renderable_object.h"
 
 class CameraManager;
 class RenderableObject;
@@ -20,14 +21,14 @@ class Light
             vector<glm::vec3> positions;
         };
 
-        Light(Scene *scene, const glm::vec3 &pos);
+        Light(Scene* scene, const glm::vec3 &pos);
         ~Light();
 
-        void render(Shader* shader); // Draw the actual light as a sphere
+        // Draw the actual light as a sphere
+        void render(unique_ptr<Shader>& shader); 
 
         // Shadow mapping
-        void blurShadowMap();
-        void renderLightView(glm::mat4 &lightView, GLuint &shadowMapID, GLuint &shadowMapBlurredID);
+        void renderLightView(Transform &trans);
 
         // Light info
         glm::vec3 position() const;
@@ -36,7 +37,7 @@ class Light
         void loadPaths();
         void savePaths();
         void recordPath(bool record);
-        void move(CameraManager *camManager, float diffX, float diffY);
+        void move(unique_ptr<CameraManager>& camManager, float diffX, float diffY);
         void autoMove();
         void toggleMode();
         bool hasMoved();
@@ -44,42 +45,38 @@ class Light
         void update(float delta);
 
     private:
-        Scene                     *m_scene;
-        glm::vec3                 m_position;
+        Scene*                                  m_scene;
 
-        bool                      m_record;
-        bool                      m_first;
-        bool                      m_saved;
-        int                       m_moveMode;
-        float                     m_angle;  // circle path
-        float                     m_radius; // circle path
+        bool                                    m_record;
+        bool                                    m_first;
+        bool                                    m_saved;
+        int                                     m_moveMode;
+        float                                   m_angle;  // circle path
+        float                                   m_radius; // circle path
 
         // Light paths and movements
         std::chrono::time_point<std::chrono::high_resolution_clock> m_oldTime;
-        float                     m_time; 
-        float                     m_distance;
-        float                     m_movement;
-        bool                      m_moved;
+        float                                   m_time; 
+        float                                   m_distance;
+        float                                   m_movement;
+        bool                                    m_moved;
+        vector<Path>                            m_paths;
+        Path                                    m_curPath;
+        //Spline                                  m_spline;
 
-        vector<Path>              m_paths;
-        Path                      m_curPath;
-        Spline                    m_spline;
-
-        glm::vec3                 m_oldPosition;
-
-        RenderableObject          *m_vbo;       // Draw light as a sphere
-        RenderableObject          *m_vboBlur;   // Quad for shadow mapping
-
-    public:
-        FrameBufferObject         *m_fboLight;
-
-        int                       m_bufferWidth;
-        int                       m_bufferHeight;
-        float                     m_fcpLight;
-        float                     m_ncpLight;
-        float                     m_fovLight;
-
-        glm::mat4                 m_lightView;
+        // Draw light as a sphere
+        unique_ptr<RenderableObject>            m_vbo;       
+        // Depth Framebuffer
+        unique_ptr<FrameBufferObject>           m_fboLight;
+        int                                     m_bufferWidth;
+        int                                     m_bufferHeight;
+        float                                   m_fcpLight;
+        float                                   m_ncpLight;
+        float                                   m_fovLight;
+        glm::vec3                               m_oldPosition;
+        glm::vec3                               m_position;
+        glm::vec3                               m_direction; // only effective for directional light
+        glm::mat4                               m_lightSpace;
 };
 
 #endif

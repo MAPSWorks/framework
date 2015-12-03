@@ -119,6 +119,70 @@ Texture::Texture(const QImage &img, GLint magFilter, GLint minFilter, GLfloat an
     create();
 }
 
+Texture::Texture(const char* imageName)
+: m_id(0),
+  m_width(0),
+  m_height(0),
+  m_target(GL_TEXTURE_2D),
+  m_mipLevel(0),
+  m_internalFormat(GL_RGBA),
+  m_format(GL_RGBA),
+  m_border(0),
+  m_type(GL_UNSIGNED_BYTE),
+  m_data(NULL),
+  m_minFilter(GL_LINEAR_MIPMAP_LINEAR),
+  m_magFilter(GL_LINEAR),
+  m_wrap(GL_CLAMP),
+  m_envMode(GL_REPLACE),
+  m_createMipMaps(GL_TRUE),
+  m_maxAnisotropy(16.0f) 
+{
+    QImage img = QImage(imageName).convertToFormat(QImage::Format_RGBA8888);
+    if (img.isNull()) { 
+        cout << "ERROR::TEXTURE::Texture() not found " << imageName << endl;
+        return;
+    } 
+
+    m_data = (GLvoid*)img.bits();
+    m_width = (GLuint)img.width();
+    m_height = (GLuint)img.height();  
+
+    if (m_createMipMaps) { 
+        m_minFilter = GL_LINEAR_MIPMAP_LINEAR;
+    } 
+    else{
+        m_minFilter = GL_LINEAR;
+    }
+
+    create();
+}
+        
+Texture::Texture(const char* imageName, 
+                 GLint wrapMode,
+                 GLint magFilter, 
+                 GLint minFilter, 
+                 GLfloat anisotrophy, 
+                 GLboolean createMipmaps)
+: m_id(0),
+  m_width(0),
+  m_height(0),
+  m_target(GL_TEXTURE_2D),
+  m_mipLevel(0),
+  m_internalFormat(GL_RGBA),
+  m_format(GL_RGBA),
+  m_border(0),
+  m_type(GL_UNSIGNED_BYTE),
+  m_data(NULL),
+  m_minFilter(minFilter),
+  m_magFilter(magFilter),
+  m_wrap(wrapMode),
+  m_envMode(GL_REPLACE),
+  m_createMipMaps(createMipmaps),
+  m_maxAnisotropy(anisotrophy)
+{
+
+}
+
 Texture::Texture(QString path)
 : m_id(0),
   m_width(0),
@@ -142,7 +206,7 @@ Texture::Texture(QString path)
         return;
     } 
 
-    QImage img = QImage(path).rgbSwapped().mirrored();
+    QImage img = QImage(path).convertToFormat(QImage::Format_RGBA8888);
 
     m_data = (GLvoid*)img.bits();
     m_width = (GLuint)img.width();

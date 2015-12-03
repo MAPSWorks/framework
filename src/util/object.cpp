@@ -40,7 +40,7 @@ void Object::init()
     buildVBOs(m_fileName, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 }
 
-void Object::render(Shader* shader)
+void Object::render(unique_ptr<Shader>& shader)
 {
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -48,35 +48,23 @@ void Object::render(Shader* shader)
     glEnable(GL_CLIP_DISTANCE0);    
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapID);    
+    glBindTexture(GL_TEXTURE_2D, params::inst().shadowInfo.shadowMapID);    
     shader->seti("shadowMap", 1);   
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, params::inst()->shadowMapBlurredID);    
-    shader->seti("shadowMapBlurred", 2);  
-
-    shader->set3f("lightPos", params::inst()->lightPos);        
-    shader->set3f("camPos", params::inst()->camPos);      
-    shader->seti("applyShadow", params::inst()->applyShadow);
-    shader->setf("shadowIntensity", params::inst()->shadowIntensity);
-    shader->seti("isSelected", m_isSelected);
-
-    shader->set4f("clipPlane", params::inst()->clipPlaneGround);
 
     for(uint i=0; i<m_vbosTriangles.size(); ++i)
     {
         m_vbosTriangles[i]->render();
     }
 
-    if (params::inst()->renderMesh)
-    {
+    //if (params::inst().renderMesh)
+    //{
 
-        for(uint i=0; i<m_vbosLines.size(); ++i)
-        {
-            m_vbosLines[i]->render();
-        }
+    //    for(uint i=0; i<m_vbosLines.size(); ++i)
+    //    {
+    //        m_vbosLines[i]->render();
+    //    }
 
-    }
+    //}
 
 	glDisable(GL_CULL_FACE);    
 }
@@ -85,7 +73,7 @@ void Object::buildVBOs(const QString &fileName, const glm::vec3 &rot, const glm:
 {
     ModelOBJ *model = new ModelOBJ();
 
-    std::cout << "\tOBSTACLEOBJ::load():" << fileName.toStdString() << std::endl;;
+    //std::cout << "\tOBSTACLEOBJ::load():" << fileName.toStdString() << std::endl;;
     model->import(fileName.toStdString().c_str());
 
 	uint nrMeshes = model->getNumberOfMeshes();
@@ -100,29 +88,28 @@ void Object::buildVBOs(const QString &fileName, const glm::vec3 &rot, const glm:
 
     scaleMat = glm::scale(scaleMat, glm::vec3(scale.x, scale.y, scale.z));
 
-	for(uint i = 0; i < nrMeshes; ++i)	
-	{
-		vector<glm::vec3> tmpVertices;	
-		vector<glm::vec3> tmpNormals;
-		vector<glm::vec3> tmpTexCoords;
+	for(uint i = 0; i < nrMeshes; ++i){
+        vector<glm::vec3> tmpVertices;	
+        vector<glm::vec3> tmpNormals;
+        vector<glm::vec3> tmpTexCoords;
 
-		const ModelOBJ::Mesh &objMesh = model->getMesh(i);
-		int startIndex = objMesh.startIndex;
-		m_nrTriangles = objMesh.triangleCount;
-		m_nrVertices = objMesh.triangleCount * 3;
+        const ModelOBJ::Mesh &objMesh = model->getMesh(i);
+        int startIndex = objMesh.startIndex;
+        m_nrTriangles = objMesh.triangleCount;
+        m_nrVertices = objMesh.triangleCount * 3;
 
-		for(int j=startIndex; j<startIndex + m_nrVertices; ++j)
-		{
-			uint idx = tempIdx[j];
+        for(int j=startIndex; j<startIndex + m_nrVertices; ++j)
+        {
+            uint idx = tempIdx[j];
 
             glm::vec3 v(vb[idx].position[0], vb[idx].position[1], vb[idx].position[2]);
             glm::vec3 n(vb[idx].normal[0], vb[idx].normal[1], vb[idx].normal[2]);
             glm::vec3 t(vb[idx].texCoord[0], vb[idx].texCoord[1], 0.0f);            
 
-			tmpVertices.push_back(v);
-			tmpNormals.push_back(n);
-			tmpTexCoords.push_back(t);
-		} 
+            tmpVertices.push_back(v);
+            tmpNormals.push_back(n);
+            tmpTexCoords.push_back(t);
+        } 
 
         glm::vec3 mi(math_maxfloat, math_maxfloat, math_maxfloat);
         glm::vec3 ma(math_minfloat, math_minfloat, math_minfloat);

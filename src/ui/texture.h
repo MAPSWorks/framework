@@ -12,7 +12,20 @@ class Texture
         Texture(GLsizei w, GLsizei h, GLint iFormat, GLint format, GLint type, GLvoid *data);
 
         Texture(const QImage &img);
-        Texture(const QImage &img, GLint magFilter, GLint minFilter, GLfloat anisotrophy, GLboolean createMipmaps);
+        Texture(const QImage &img, 
+                GLint magFilter, 
+                GLint minFilter, 
+                GLfloat anisotrophy, 
+                GLboolean createMipmaps);
+
+        Texture(const char* imageName);
+        Texture(const char* imageName, 
+                GLint wrapMode,
+                GLint magFilter, 
+                GLint minFilter, 
+                GLfloat anisotrophy, 
+                GLboolean createMipmaps);
+
         Texture(QString path);
         ~Texture();
 

@@ -3,6 +3,8 @@
 #include <sstream> 
 #include <iostream> 
 
+#include "main_window.h"
+
 Shader::Shader(Config conf)
 : m_vFileName(NULL),
   m_cFileName(NULL),
@@ -35,7 +37,9 @@ Shader::Shader(Config conf)
     }
 }
 
-Shader::Shader(const char *vFileName, const char *fFileName, Config conf)
+Shader::Shader(const char *vFileName, 
+               const char *fFileName, 
+               Config conf)
 : m_vFileName(NULL),
   m_cFileName(NULL),
   m_eFileName(NULL),
@@ -72,7 +76,10 @@ Shader::Shader(const char *vFileName, const char *fFileName, Config conf)
     }
 }
 
-Shader::Shader(const char *vFileName, const char *gFileName, const char *fFileName, Config conf)
+Shader::Shader(const char *vFileName, 
+               const char *gFileName, 
+               const char *fFileName, 
+               Config conf)
 : m_vFileName(NULL),
   m_cFileName(NULL),
   m_eFileName(NULL),
@@ -150,7 +157,7 @@ void Shader::attachVertexShader(const char *fileName)
 
         if(source)
         {
-            m_vertProg = compile(source, GL_VERTEX_SHADER);
+            m_vertProg = compile(source, GL_VERTEX_SHADER, fileName);
             glAttachShader(m_id, m_vertProg);
 
             //std::cout << "\tSHADER::attachVertexShader(): attached:     " << fileName << std::endl;
@@ -171,7 +178,7 @@ void Shader::attachControlShader(const char *fileName)
 
         if(source)
         {
-            m_contProg = compile(source, GL_TESS_CONTROL_SHADER);
+            m_contProg = compile(source, GL_TESS_CONTROL_SHADER, fileName);
             glAttachShader(m_id, m_contProg);
 
             //std::cout << "\tSHADER::attachControlShader(): attached:    " << fileName << std::endl;
@@ -193,7 +200,7 @@ void Shader::attachEvaluationShader(const char *fileName)
 
         if(source)
         {
-            m_evalProg = compile(source, GL_TESS_EVALUATION_SHADER);
+            m_evalProg = compile(source, GL_TESS_EVALUATION_SHADER, fileName);
             glAttachShader(m_id, m_evalProg);
 
             //std::cout << "\tSHADER::attachEvaluationShader(): attached:" << fileName << std::endl;
@@ -215,7 +222,7 @@ void Shader::attachGeometryShader(const char *fileName)
 
         if(source)
         {
-            m_geomProg = compile(source, GL_GEOMETRY_SHADER);
+            m_geomProg = compile(source, GL_GEOMETRY_SHADER, fileName);
             glAttachShader(m_id, m_geomProg);
 
             //std::cout << "\tSHADER::attachGeometryShader(): attached:  " << fileName << std::endl;
@@ -236,7 +243,7 @@ void Shader::attachFragmentShader(const char *fileName)
 
         if(source)
         {
-            m_fragProg = compile(source, GL_FRAGMENT_SHADER);
+            m_fragProg = compile(source, GL_FRAGMENT_SHADER, fileName);
             glAttachShader(m_id, m_fragProg);
 
             //std::cout << "\tSHADER::attachFragmentShader(): attached:  " << fileName << std::endl;
@@ -293,31 +300,31 @@ void Shader::attachShaderFromSource(const char *source, unsigned int type)
     {
         if(type == GL_VERTEX_SHADER)
         {
-            m_vertProg = compile(source, type);
+            m_vertProg = compile(source, type, source);
             glAttachShader(m_id, m_vertProg);
         }
         
         if(type == GL_TESS_CONTROL_SHADER)
         {
-            m_contProg = compile(source, type);
+            m_contProg = compile(source, type, source);
             glAttachShader(m_id, m_contProg);
         }
 
         if(type == GL_TESS_EVALUATION_SHADER)
         {
-            m_evalProg = compile(source, type);
+            m_evalProg = compile(source, type, source);
             glAttachShader(m_id, m_evalProg);
         }
 
         if(type == GL_GEOMETRY_SHADER)
         {
-            m_geomProg = compile(source, type);
+            m_geomProg = compile(source, type, source);
             glAttachShader(m_id, m_geomProg);
         }
 
         if(type == GL_FRAGMENT_SHADER)
         {
-            m_fragProg = compile(source, type);
+            m_fragProg = compile(source, type, source);
             glAttachShader(m_id, m_fragProg);
         }
 
@@ -393,6 +400,8 @@ void Shader::autoUpdate()
     checkFile(m_eFileName, m_eOldDateTime, GL_TESS_EVALUATION_SHADER);
     checkFile(m_gFileName, m_gOldDateTime, GL_GEOMETRY_SHADER);
     checkFile(m_fFileName, m_fOldDateTime, GL_FRAGMENT_SHADER);
+
+    MainWindow::getInstance().updateScene();
 
     m_firstUpdate = false;
 }
@@ -531,7 +540,7 @@ const char *Shader::readFile(const char *fileName)
     }
 }
 
-unsigned int Shader::compile(const char *source, unsigned int type)
+unsigned int Shader::compile(const char *source, unsigned int type, const char* filename)
 {
     GLuint id = glCreateShader(type);
     glShaderSource(id, 1, &source, NULL);
@@ -545,7 +554,7 @@ unsigned int Shader::compile(const char *source, unsigned int type)
     {
         char* logstr = new char[2048];
         glGetShaderInfoLog(id, 2048, NULL, logstr);
-        printf("SHADER::Error compiling shader %s:\n%s\n", source, logstr);
+        printf("SHADER::Error compiling shader file %s:\n%s\n", filename, logstr);
         delete[] logstr;
         //exit(-1);
         return 0;
@@ -596,4 +605,9 @@ void Shader::cleanUp()
         glDeleteProgram(m_id);
         m_id = 0;
     }
+}
+
+void Shader::selectSubroutine(const char* label, GLenum shadertype){
+    GLuint index = glGetSubroutineIndex(m_id, shadertype, label);
+    glUniformSubroutinesuiv(shadertype, 1, &index);
 }

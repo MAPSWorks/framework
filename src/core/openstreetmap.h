@@ -47,7 +47,7 @@ class OpenStreetMap {
         void interpolateMap();
 
         // Rendering
-        void render(Shader* shader);
+        void render(unique_ptr<Shader>& shader);
         void prepareForRendering();
 
         // Clear data

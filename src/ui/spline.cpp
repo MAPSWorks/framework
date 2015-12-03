@@ -202,9 +202,9 @@ void Spline::render(const Transform &trans, Config conf)
     m_vbo->setData(data, GL_POINTS);
 
     glm::mat4 model(1.0f);
-    glm::mat4 view = trans.view;
-    glm::mat4 projection = trans.projection;
-    glm::mat4 viewProjection = trans.viewProjection;
+    glm::mat4 view = trans.matView;
+    glm::mat4 projection = trans.matProjection;
+    glm::mat4 viewProjection = trans.matViewProjection;
 
     m_shader->bind();  
         m_shader->setMatrix("matModel", model); 

@@ -2,11 +2,11 @@
 #include "nice_grid.h"
 #include "shader.h"
 #include "renderable_object.h"
-#include "mesh.h"
 #include "camera_manager.h"
 #include "object.h"
+#include "resource_manager.h"
 
-Scene::Scene(CameraManager *camManager)
+Scene::Scene(unique_ptr<CameraManager>& camManager)
 : m_cameraManager(camManager),
   m_activeIdx(-1)
 {
@@ -15,145 +15,187 @@ Scene::Scene(CameraManager *camManager)
 
 Scene::~Scene()
 {
-    // Delete Shaders
-    for(auto& m : m_shaders) { 
-        delete m.second;
-    } 
-
-    // Delete Objects
-    if(m_light) { 
-        delete m_light;
-    } 
-    if(m_niceGrid) { 
-        delete m_niceGrid;
-    } 
-
-    for (size_t i = 0; i < m_objects.size(); ++i) { 
-        delete m_objects[i];
-    } 
-
-    if(m_trajectories) { 
-        delete m_trajectories; 
-    } 
-
-    if(m_osmMap) { 
-        delete m_osmMap; 
-    } 
-
 }
 
 void Scene::initShaders(){
-    m_shaders["trajectory"]      = new Shader("../shader/Trajectory.vert.glsl", 
-                                           "../shader/Trajectory.frag.glsl");
+    ResourceManager::inst().loadShader("../shader/Default.vert.glsl", 
+                                       "../shader/Default.frag.glsl",
+                                       "default");
+    ResourceManager::inst().loadShader("../shader/DefaultDepth.vert.glsl", 
+                                       "../shader/DefaultDepth.frag.glsl",
+                                       "defaultDepth");
+    ResourceManager::inst().loadShader("../shader/Model.vert.glsl", 
+                                       "../shader/Model.geom.glsl",
+                                       "../shader/Model.frag.glsl",
+                                       "model");
 
-    m_shaders["default"]      = new Shader("../shader/Default.vert.glsl", 
-                                           "../shader/Default.frag.glsl");
-
-    m_shaders["defaultDepth"] = new Shader("../shader/DefaultDepth.vert.glsl", 
-                                           "../shader/DefaultDepth.frag.glsl");
-
-    m_shaders["defaultLight"] = new Shader("../shader/DefaultLight.vert.glsl", 
-                                           "../shader/DefaultLight.frag.glsl");
-
-    m_shaders["niceGrid"]     = new Shader("../shader/NiceGrid.vert.glsl", 
-                                           "../shader/NiceGrid.frag.glsl");
-
-    m_shaders["object"]       = new Shader("../shader/Object.vert.glsl", 
-                                           "../shader/Object.frag.glsl");
-
+    // Default texture
+    ResourceManager::inst().loadTexture("../data/Texture/floor_grey.png",
+                                        GL_REPEAT,
+                                        "floor_grey");
+    ResourceManager::inst().loadTexture("../data/Texture/floor_blue.png",
+                                        GL_REPEAT,
+                                        "floor_blue");
+    ResourceManager::inst().loadTexture("../data/Texture/floor.png",
+                                        GL_REPEAT,
+                                        "floor");
+    ResourceManager::inst().loadTexture("../data/Texture/default.png",
+                                        GL_REPEAT,
+                                        "default");
 }
 
 void Scene::init()
 {
     initShaders(); 
 
-    m_light = new Light(this, glm::vec3(10.0f, 30.0f, 10.0f));
-    params::inst()->lightPos = m_light->position();
-	m_niceGrid = new NiceGrid(100.0f, 40.0f);  
+    float scale = params::inst().scale;
+    m_light.reset(new Light(this, glm::vec3(-0.4f * scale, 
+                                            scale,
+                                            0.2f * scale)));
+	m_niceGrid.reset(new NiceGrid(params::inst().scale, 40.0f)); 
 
-    Object *sphere = new Object("../data/Objs/sphere.obj", 
-                                glm::vec3(0.0f, 1.0f, 0.0f), 
-                                glm::vec3(1.0f, 1.0f, 1.0f), 
-                                glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
-                                glm::vec4(0.2f, 0.596f, 0.859f, 1.0f));
-    m_objects.push_back(sphere);
+    unique_ptr<Object> sphere(new Object("../data/Objs/sphere.obj", 
+                                         glm::vec3(0.0f, 1.0f, 0.0f), 
+                                         glm::vec3(1.0f, 1.0f, 1.0f), 
+                                         glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
+                                         glm::vec4(0.2f, 0.596f, 0.859f, 1.0f)));
+    m_objects.push_back(std::move(sphere));
 
-    m_trajectories = new Trajectories();
-    m_osmMap       = new OpenStreetMap();
+    m_model.reset(new Model("../data/Models/teapot.obj"));
+
+    m_trajectories.reset(new Trajectories());
+    m_osmMap.reset(new OpenStreetMap());
+
+    //ResourceManager::inst().printStats();
 }
 
 void Scene::renderWorld(const Transform &trans)
 {
-    m_shaders["niceGrid"]->bind();
-        m_shaders["niceGrid"]->setMatrix("matView", trans.view);
-        m_shaders["niceGrid"]->setMatrix("matProjection", trans.projection);
-        m_shaders["niceGrid"]->setMatrix("matLightView", trans.lightView);
-        m_shaders["niceGrid"]->setMatrix("matViewProjection", trans.viewProjection);
-        m_niceGrid->render(m_shaders["niceGrid"]); 
-        
-    m_shaders["default"]->bind();
-
-        m_shaders["default"]->setMatrix("matView", trans.view);
-        m_shaders["default"]->setMatrix("matProjection", trans.projection);
-
-        m_light->render(m_shaders["default"]);
-        m_cameraManager->renderCameras(m_shaders["default"]);
-        m_trajectories->render(m_shaders["default"]);
-
-    m_shaders["default"]->release();
-
+    unique_ptr<Shader>& default_shader = ResourceManager::inst().getShader("default");
+    default_shader->bind();
+        default_shader->setMatrix("matModel", glm::mat4(1.0f));
+        default_shader->setMatrix("matViewProjection", trans.matViewProjection);
+        m_light->render(default_shader);
+        //m_cameraManager->renderCameras(default_shader);
+    default_shader->release();
 }
 
 void Scene::renderObjects(const Transform &trans)
 {
-    if(params::inst()->bboxUpdated) { 
+    if(params::inst().boundBox.updated) { 
         m_trajectories->prepareForRendering();
         m_osmMap->prepareForRendering();
-        params::inst()->bboxUpdated = false; 
+        params::inst().boundBox.updated = false; 
     } 
 
-    // Render Trajectories
-    if(!m_trajectories->isEmpty()){
-        //m_shaders["trajectory"]->bind();
-        //    m_shaders["trajectory"]->setMatrix("matView", trans.view);
-        //    m_shaders["trajectory"]->setMatrix("matProjection", trans.projection);
+    glm::mat3 matNormal;
+    glm::mat4 matShadow(1.0f);
+    glm::mat4 matViewport(1.0f);
+    matViewport[0][0] = params::inst().windowSize.x / 2.0f; 
+    matViewport[1][1] = params::inst().windowSize.y / 2.0f; 
+    matViewport[3][0] = params::inst().windowSize.x / 2.0f; 
+    matViewport[3][1] = params::inst().windowSize.y / 2.0f;
 
-        //    m_trajectories->render(m_shaders["trajectory"]);
-     
-        //m_shaders["trajectory"]->release();
-    }
+    unique_ptr<Shader>& model_shader = ResourceManager::inst().getShader("model");
+    model_shader->bind();
+
+    // Common uniforms 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, params::inst().shadowInfo.shadowMapID);    
+    model_shader->seti("ShadowMap", 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_3D, params::inst().shadowInfo.offsetTexID);    
+    model_shader->seti("OffsetTex", 1);
     
-    // Render OpenStreetMap
-    if(!m_osmMap->isEmpty()) { 
-        m_shaders["default"]->bind();
-            m_shaders["default"]->setMatrix("matView", trans.view);
-            m_shaders["default"]->setMatrix("matProjection", trans.projection);
+    model_shader->setMatrix("matModel", glm::mat4(1.0));
+    matNormal = glm::mat3(1.0f);
+    model_shader->setMatrix("matNormal", matNormal);
+    model_shader->setMatrix("matViewProjection", trans.matViewProjection);
+    model_shader->setMatrix("matLightSpace", trans.matLightSpace);
+     
+    model_shader->setMatrix("matViewport", matViewport);
 
-            m_osmMap->render(m_shaders["default"]);
-        m_shaders["default"]->release();      
+    model_shader->set3f("camPos", m_cameraManager->currentCamPos());
+    model_shader->set3f("OffsetTexSize", glm::vec3(8, 8, 16));
+
+    model_shader->set3f("Light.Position", m_light->position());
+    model_shader->set3f("Light.Intensity", glm::vec3(1.0f));
+
+    if(params::inst().shadowInfo.applyShadow) { 
+        // Render with shadow 
+        if(params::inst().polygonMode == 0) { 
+            // Render normally
+            model_shader->selectSubroutine("shadeWithShadow", GL_FRAGMENT_SHADER);
+        } 
+        else{
+            // Render with wire frame
+            model_shader->selectSubroutine("shadeWithShadowAndWireframe", GL_FRAGMENT_SHADER);
+        }
     } 
+    else{
+        // Render without shadow
+        if(params::inst().polygonMode == 0) { 
+            // Render normally
+            model_shader->selectSubroutine("shadeNoShadow", GL_FRAGMENT_SHADER);
+        } 
+        else{
+            // Render with wire frame
+            model_shader->selectSubroutine("shadeNoShadowWireframe", GL_FRAGMENT_SHADER);
+        }
+    }
+
+    // Object specific uniforms
+    glActiveTexture(GL_TEXTURE2);
+    switch(params::inst().gridRenderMode) { 
+        case 0: 
+            glBindTexture(GL_TEXTURE_2D, ResourceManager::inst().getTexture("floor")->id());    
+            break; 
+        case 1: 
+            glBindTexture(GL_TEXTURE_2D, ResourceManager::inst().getTexture("floor_grey")->id());    
+            break;
+        case 2: 
+            glBindTexture(GL_TEXTURE_2D, ResourceManager::inst().getTexture("floor_blue")->id());    
+            break;
+        case 3: 
+            glBindTexture(GL_TEXTURE_2D, ResourceManager::inst().getTexture("default")->id());    
+            break; 
+        default: 
+            glBindTexture(GL_TEXTURE_2D, ResourceManager::inst().getTexture("default")->id());    
+            break; 
+    } 
+    model_shader->seti("DiffTex1", 2);
+
+    glm::vec3 nice_grid_color(0.5f);
+    model_shader->set3f("Material.Kd", nice_grid_color);
+    model_shader->set3f("Material.Ka", nice_grid_color);
+    model_shader->set3f("Material.Ks", glm::vec3(0.1f));
+    model_shader->setf("Material.Shininess", 64.0f);
+
+    // Render nice grid
+    m_niceGrid->render(model_shader);
+
+    // Model
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, ResourceManager::inst().getTexture("default")->id());    
+    model_shader->seti("DiffTex1", 2);
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(10.0, 10.0, 10.0));
+    model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
+    model_shader->setMatrix("matModel", model);
+    matNormal = glm::mat3(glm::inverseTranspose(model));
+    model_shader->setMatrix("matNormal", matNormal);
 
-    m_shaders["object"]->bind();
-        m_shaders["object"]->setMatrix("matModel", model);
-        m_shaders["object"]->setMatrix("matView", trans.view);
-        m_shaders["object"]->setMatrix("matProjection", trans.projection);
-        m_shaders["object"]->setMatrix("matLightView", trans.lightView);
-        m_shaders["object"]->set3fv("lightPos", glm::value_ptr(params::inst()->lightPos));
-        m_shaders["object"]->set3fv("lightDir", glm::value_ptr(params::inst()->lightDir));
+    model_shader->set3f("Material.Kd", glm::vec3(0.9f));
+    model_shader->set3f("Material.Ka", glm::vec3(0.2f));
+    model_shader->set3f("Material.Ks", glm::vec3(0.7f));
+    model_shader->setf("Material.Shininess", 64.0f);
+        
+    glDisable(GL_BLEND);
+    m_model->render(model_shader);
+    glEnable(GL_BLEND);
 
-        if (params::inst()->renderObjects)
-        {
-            for(uint i=0; i<m_objects.size(); ++i)
-            {
-                m_objects[i]->render(m_shaders["object"]);
-            }
-        }
-
-    m_shaders["object"]->release();
-
+    model_shader->release();
 }
 
 void Scene::renderObjectsDepth(const Transform &trans)
@@ -162,24 +204,26 @@ void Scene::renderObjectsDepth(const Transform &trans)
         return; 
     } 
 
-    m_shaders["defaultDepth"]->bind();
-        m_shaders["defaultDepth"]->setMatrix("matView", trans.view);
-        m_shaders["defaultDepth"]->setMatrix("matProjection", trans.projection);
-        m_shaders["defaultDepth"]->setMatrix("matLightView", trans.lightView);
+    unique_ptr<Shader>& model_shader = ResourceManager::inst().getShader("defaultDepth");
+    model_shader->bind();
 
+    glCullFace(GL_FRONT);
+
+        // Render nice grid
+        model_shader->setMatrix("matViewProjection", trans.matViewProjection);
+        model_shader->setMatrix("matModel", glm::mat4(1.0f));
+        m_niceGrid->render(model_shader);
+
+        // Model
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
-        m_shaders["defaultDepth"]->setMatrix("matModel", model);
+        model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
+        model_shader->setMatrix("matModel", model);
+        model_shader->setMatrix("matViewProjection", trans.matViewProjection);
+        m_model->render(model_shader);
 
-        if (params::inst()->renderObjects)
-        {
-            for(uint i=0; i<m_objects.size(); ++i)
-            {
-               m_objects[i]->render(m_shaders["defaultDepth"]);
-            }
-        }
-
-    m_shaders["defaultDepth"]->release();
+    glCullFace(GL_BACK);
+    model_shader->release();
 }
  
 void Scene::update(float delta)
@@ -268,4 +312,5 @@ void Scene::resetSelection()
     }
 
     m_activeIdx = -1;
+
 }

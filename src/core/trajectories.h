@@ -41,7 +41,7 @@ class Trajectories {
                                       int                minNumPt = 3);
         
         // Rendering
-        void render(Shader* shader);
+        void render(unique_ptr<Shader>& shader);
         void prepareForRendering();
         void updatePointVBO();
         void updateAnimateVBO();

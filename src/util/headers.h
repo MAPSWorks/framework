@@ -44,71 +44,60 @@
 using namespace std;
 
 struct Transform{
-    glm::mat4 view;
-    glm::mat4 projection;
-    glm::mat4 lightView;
-    glm::mat3 normal;
-    glm::mat4 viewProjection;
-    glm::mat4 modelViewProjection;
+    glm::mat4 matView;
+    glm::mat4 matProjection;
+    glm::mat4 matViewProjection;
+    glm::mat4 matLightSpace; // Light's (Projection * View)
+};
+
+struct BoundingBox{
+    bool      updated = false;
+    glm::vec3 bottomLeft = glm::vec3(1e10, 1e10, 1e10);
+    glm::vec3 upperRight = glm::vec3(-1e10, -1e10, -1e10);
+};
+
+struct ShadowInfo{
+    bool            applyShadow = true;
+    GLuint          shadowMapID = 0;
+
+    // Random offset texture
+    int             texSize = 8;
+    int             texSamplesU = 4;
+    int             texSamplesV = 8;
+    GLuint          offsetTexID; // 3D texture for random offsets 
+    glm::vec3 offsetTexSize(){
+        return glm::vec3(texSize, 
+                         texSize, 
+                         texSamplesU * texSamplesV / 2);
+    }
 };
 
 struct GlobalObjectParams{
-    glm::vec3 lightPos;
-    glm::vec3 lightDir;
-    glm::vec3 camPos;
-    glm::vec3 attenuation;
-    glm::vec2 lightCone;
-	glm::vec2 blur;
-    glm::vec2 windowSize;
-    glm::vec4 clipPlaneGround;
-    
-    // Global Bounding Box for Coordinate Normalization
-    bool      bboxUpdated = false;
-    glm::vec3 minBBOX = glm::vec3(1e10, 1e10, 1e10); // minimum Bounding Box (x, y, z)
-    glm::vec3 maxBBOX = glm::vec3(-1e10, -1e10, -1e10); // maximum Bounding Box (x, y, z)
-    
-    int   gridRenderMode;
-    int   polygonMode;
+    glm::vec2       windowSize;
+    float           scale = 100.0f; // all x, y, z coordinate scale by this factor 
+    int             polygonMode = 0; // 0: normal; 1: wire frame
+    int             gridRenderMode = 0; // 0: texture; 1: white color
 
-    bool  applyShadow;
-    bool  renderMesh;
-    bool  renderObjects;    
-
-    float shadowIntensity;
-    float depthRangeMax;
-    float depthRangeMin;
-    float polygonOffsetFactor;
-    float polygonOffsetUnits; 
-    float ncp;
-    float fcp;
-    float fov;
-
-    GLuint shadowMapID;
-    GLuint shadowMapBlurredID;
+    BoundingBox     boundBox;
+    ShadowInfo      shadowInfo;
 };
 
 //Singleton Template
 template<class T>
 class Singleton {
 public:
-    static T* inst()
+    static T& inst()
     {
-        if (!m_pInstance)
-        {
-            m_pInstance = new T;
-        }
-        return m_pInstance;
+        static T singleton;
+        return singleton;
     }
 
 private:
     Singleton(){};
     Singleton(const Singleton&){};
     Singleton& operator=(const Singleton&){};
-
-    static T* m_pInstance;
-
 };
-template<class T> T* Singleton<T>::m_pInstance = NULL;
+
 typedef Singleton<GlobalObjectParams> params;
 
 void resetBBOX();
@@ -118,24 +107,23 @@ void updateBBOX(float minX, float maxX,
 
 glm::vec3 BBOXNormalize(float x, float y, float z);
 
-float cosineInterpolation(float a, double b, double s);
+float  cosineInterpolation(float a, double b, double s);
 double hermiteInterpolation(double y0, double y1, double y2, double y3, double mu, double tension, double bias);
 
 void saveImage(QImage& img);
 void saveImage(QImage& img, int idx);
 
-void getCameraFrame(const Transform &trans, glm::vec3 &dir, glm::vec3 &up, glm::vec3 &right, glm::vec3 &pos);
-glm::vec3 getCamPosFromModelView(const Transform &trans);
-glm::vec3 getViewDirFromModelView(const Transform &trans);
-glm::vec3 getUpDirFromModelView(const Transform &trans);
-
 void checkGLError();
 void checkGLVersion();
 
-static float colorJet[] = { 0.000000f, 0.000000f, 0.562500f, 0.000000f, 0.000000f, 0.625000f, 0.000000f, 0.000000f, 0.687500f, 0.000000f, 0.000000f, 0.750000f, 0.000000f, 0.000000f, 0.812500f, 0.000000f, 0.000000f, 0.875000f, 0.000000f, 0.000000f, 0.937500f, 0.000000f, 0.000000f, 1.000000f, 0.000000f, 0.062500f, 1.000000f, 0.000000f, 0.125000f, 1.000000f, 0.000000f, 0.187500f, 1.000000f, 0.000000f, 0.250000f, 1.000000f, 0.000000f, 0.312500f, 1.000000f, 0.000000f, 0.375000f, 1.000000f, 0.000000f, 0.437500f, 1.000000f, 0.000000f, 0.500000f, 1.000000f, 0.000000f, 0.562500f, 1.000000f, 0.000000f, 0.625000f, 1.000000f, 0.000000f, 0.687500f, 1.000000f, 0.000000f, 0.750000f, 1.000000f, 0.000000f, 0.812500f, 1.000000f, 0.000000f, 0.875000f, 1.000000f, 0.000000f, 0.937500f, 1.000000f, 0.000000f, 1.000000f, 1.000000f, 0.062500f, 1.000000f, 0.937500f, 0.125000f, 1.000000f, 0.875000f, 0.187500f, 1.000000f, 0.812500f, 0.250000f, 1.000000f, 0.750000f, 0.312500f, 1.000000f, 0.687500f, 0.375000f, 1.000000f, 0.625000f, 0.437500f, 1.000000f, 0.562500f, 0.500000f, 1.000000f, 0.500000f, 0.562500f, 1.000000f, 0.437500f, 0.625000f, 1.000000f, 0.375000f, 0.687500f, 1.000000f, 0.312500f, 0.750000f, 1.000000f, 0.250000f, 0.812500f, 1.000000f, 0.187500f, 0.875000f, 1.000000f, 0.125000f, 0.937500f, 1.000000f, 0.062500f, 1.000000f, 1.000000f, 0.000000f, 1.000000f, 0.937500f, 0.000000f, 1.000000f, 0.875000f, 0.000000f, 1.000000f, 0.812500f, 0.000000f, 1.000000f, 0.750000f, 0.000000f, 1.000000f, 0.687500f, 0.000000f, 1.000000f, 0.625000f, 0.000000f, 1.000000f, 0.562500f, 0.000000f, 1.000000f, 0.500000f, 0.000000f, 1.000000f, 0.437500f, 0.000000f, 1.000000f, 0.375000f, 0.000000f, 1.000000f, 0.312500f, 0.000000f, 1.000000f, 0.250000f, 0.000000f, 1.000000f, 0.187500f, 0.000000f, 1.000000f, 0.125000f, 0.000000f, 1.000000f, 0.062500f, 0.000000f, 1.000000f, 0.000000f, 0.000000f, 0.937500f, 0.000000f, 0.000000f, 0.875000f, 0.000000f, 0.000000f, 0.812500f, 0.000000f, 0.000000f, 0.750000f, 0.000000f, 0.000000f, 0.687500f, 0.000000f, 0.000000f, 0.625000f, 0.000000f, 0.000000f, 0.562500f, 0.000000f, 0.000000f, 0.500000f, 0.000000f, 0.000000f };
-static float colorHot[] = { 0.041667f, 0.000000f, 0.000000f, 0.083333f, 0.000000f, 0.000000f, 0.125000f, 0.000000f, 0.000000f, 0.166667f, 0.000000f, 0.000000f, 0.208333f, 0.000000f, 0.000000f, 0.250000f, 0.000000f, 0.000000f, 0.291667f, 0.000000f, 0.000000f, 0.333333f, 0.000000f, 0.000000f, 0.375000f, 0.000000f, 0.000000f, 0.416667f, 0.000000f, 0.000000f, 0.458333f, 0.000000f, 0.000000f, 0.500000f, 0.000000f, 0.000000f, 0.541667f, 0.000000f, 0.000000f, 0.583333f, 0.000000f, 0.000000f, 0.625000f, 0.000000f, 0.000000f, 0.666667f, 0.000000f, 0.000000f, 0.708333f, 0.000000f, 0.000000f, 0.750000f, 0.000000f, 0.000000f, 0.791667f, 0.000000f, 0.000000f, 0.833333f, 0.000000f, 0.000000f, 0.875000f, 0.000000f, 0.000000f, 0.916667f, 0.000000f, 0.000000f, 0.958333f, 0.000000f, 0.000000f, 1.000000f, 0.000000f, 0.000000f, 1.000000f, 0.041667f, 0.000000f, 1.000000f, 0.083333f, 0.000000f, 1.000000f, 0.125000f, 0.000000f, 1.000000f, 0.166667f, 0.000000f, 1.000000f, 0.208333f, 0.000000f, 1.000000f, 0.250000f, 0.000000f, 1.000000f, 0.291667f, 0.000000f, 1.000000f, 0.333333f, 0.000000f, 1.000000f, 0.375000f, 0.000000f, 1.000000f, 0.416667f, 0.000000f, 1.000000f, 0.458333f, 0.000000f, 1.000000f, 0.500000f, 0.000000f, 1.000000f, 0.541667f, 0.000000f, 1.000000f, 0.583333f, 0.000000f, 1.000000f, 0.625000f, 0.000000f, 1.000000f, 0.666667f, 0.000000f, 1.000000f, 0.708333f, 0.000000f, 1.000000f, 0.750000f, 0.000000f, 1.000000f, 0.791667f, 0.000000f, 1.000000f, 0.833333f, 0.000000f, 1.000000f, 0.875000f, 0.000000f, 1.000000f, 0.916667f, 0.000000f, 1.000000f, 0.958333f, 0.000000f, 1.000000f, 1.000000f, 0.000000f, 1.000000f, 1.000000f, 0.062500f, 1.000000f, 1.000000f, 0.125000f, 1.000000f, 1.000000f, 0.187500f, 1.000000f, 1.000000f, 0.250000f, 1.000000f, 1.000000f, 0.312500f, 1.000000f, 1.000000f, 0.375000f, 1.000000f, 1.000000f, 0.437500f, 1.000000f, 1.000000f, 0.500000f, 1.000000f, 1.000000f, 0.562500f, 1.000000f, 1.000000f, 0.625000f, 1.000000f, 1.000000f, 0.687500f, 1.000000f, 1.000000f, 0.750000f, 1.000000f, 1.000000f, 0.812500f, 1.000000f, 1.000000f, 0.875000f, 1.000000f, 1.000000f, 0.937500f, 1.000000f, 1.000000f, 1.000000f };
+void getCameraFrame(const Transform &trans, 
+                    glm::vec3 &dir, 
+                    glm::vec3 &up, 
+                    glm::vec3 &right, 
+                    glm::vec3 &pos);
 
-void colorMap(float x, vector<float>& out, vector<float>& cm);
-void colorMapBgr(float x, vector<float>& out, vector<float>& cm);
+// Return random float between -0.5 and 0.5
+float jitter();
+void  buildOffsetTex(int texSize, int samplesU, int samplesV);
 
 #endif /* end of include guard: HEADERS_H_ */

@@ -7,6 +7,11 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# ASSIMP for model loading
+find_package(PkgConfig REQUIRED)
+pkg_search_module(ASSIMP REQUIRED assimp)
+include_directories( ${ASSIMP_INLUDE_DIRS} )
+
 # Point Cloud Library
 find_package(PCL REQUIRED common kdtree search)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -68,6 +73,7 @@ target_link_libraries(${exe_name}
                       ${CGAL_LIBRARIES}
                       ${Boost_SYSTEM_LIBRARY} 
                       ${Boost_FILESYSTEM_LIBRARY}
+                      assimp ${ASSIMP_LIBRARIES}
                       ${PCL_COMMON_LIBRARY} 
                       ${PCL_KDTREE_LIBRARY}
                       ${PCL_SEARCH_LIBRARY}

@@ -3,11 +3,10 @@
 #include "shader.h"
 #include "renderable_object.h"
 #include "scene.h"
-#include "mesh.h"
 #include "light.h"
 #include "texture.h"
 
-Renderer::Renderer(Scene *scene, CameraManager *camManager)
+Renderer::Renderer(unique_ptr<Scene>& scene, unique_ptr<CameraManager>& camManager)
 : m_scene(scene),
   m_cameraManager(camManager),
   m_bgColor(0.1f, 0.1f, 0.1f, 1.0f),
@@ -29,11 +28,10 @@ void Renderer::init()
 
 void Renderer::render(Transform &trans)
 {
-    if(params::inst()->applyShadow)
+    if(params::inst().shadowInfo.applyShadow)
     {
-        m_scene->m_light->renderLightView(trans.lightView, 
-                                          params::inst()->shadowMapID, 
-                                          params::inst()->shadowMapBlurredID); 
+        // Render Shadow Map
+        m_scene->m_light->renderLightView(trans); 
     }    
 
     renderScene(trans);
@@ -44,7 +42,7 @@ void Renderer::renderScene(const Transform &trans)
     glClearColor(m_bgColor.x, m_bgColor.y, m_bgColor.z, m_bgColor.w);    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     
 
-    if (params::inst()->polygonMode == 1)
+    if (params::inst().polygonMode == 2)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

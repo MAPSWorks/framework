@@ -34,6 +34,10 @@ void MainWindow::showInformation(const string& information)
 	emit showInformationRequested(information.c_str());
 }
 
+void MainWindow::updateScene(){
+    ui_->scene_widget->update();
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     QMainWindow::closeEvent(event);
