@@ -12,6 +12,8 @@ float distance(float x1, float y1, float x2, float y2)
 }
 
 float deltaHeadingH1toH2(float h1, float h2){
+    // h2 is base. if h1 is to the left of h2, the result is positive;
+    //             else: result is negative
     float delta_angle = abs(h1 - h2);
    
     if (delta_angle > 180.0f) {
@@ -55,6 +57,31 @@ Eigen::Vector3f headingToVector3f(const int h){
     float heading_in_radius = h * PI / 180.0f;
     
     return Eigen::Vector3f(cos(heading_in_radius),
+                           sin(heading_in_radius),
+                           0.0f);
+}
+
+Eigen::Vector2d headingToVector2d(const int h){
+    if (h < 0 || h > 360) {
+        cout << "Error when converting heading to 2d vector. Invalid input: " << h << endl;
+        return Eigen::Vector2d(0.0f, 0.0f);
+    }
+    
+    float heading_in_radius = h * PI / 180.0f;
+    
+    return Eigen::Vector2d(cos(heading_in_radius),
+                           sin(heading_in_radius));
+}
+
+Eigen::Vector3d headingToVector3d(const int h){
+    if (h < 0 || h > 360) {
+        cout << "Error when converting heading to 3d vector. Invalid input! Input is: " << h << endl;
+        return Eigen::Vector3d(0.0f, 0.0f, 0.0f);
+    }
+    
+    float heading_in_radius = h * PI / 180.0f;
+    
+    return Eigen::Vector3d(cos(heading_in_radius),
                            sin(heading_in_radius),
                            0.0f);
 }
@@ -117,6 +144,64 @@ int vector3fToHeading(const Eigen::Vector3f vec){
     return angle;
 }
 
+int vector2dToHeading(const Eigen::Vector2d vec){
+    Eigen::Vector2d tmp_vec(vec);
+   
+    float length = tmp_vec.norm();
+    
+    if(length < 1e-3){
+        // very small vector
+        cout << "Warning (from vectorToHeading2d): encountered zero vector when converting to heading." << endl;
+        return 0;
+    }
+    
+    tmp_vec /= length;
+    float cos_value = tmp_vec[0];
+    if (cos_value > 1.0f) {
+        cos_value = 1.0f;
+    }
+    if (cos_value < -1.0f) {
+        cos_value = -1.0f;
+    }
+    
+    int angle = floor(acos(cos_value) * 180.0f / PI);
+    
+    if (tmp_vec[1] < 0) {
+        angle = 360 - angle;
+    }
+    
+    return angle;
+}
+
+int vector3dToHeading(const Eigen::Vector3d vec){
+    Eigen::Vector3d tmp_vec(vec);
+    
+    float length = tmp_vec.norm();
+    
+    if(length < 1e-3){
+        // very small vector
+        cout << "Warning (from vectorToHeading3d): encountered zero vector when converting to heading." << endl;
+        return 0;
+    }
+
+    tmp_vec /= length;
+    float cos_value = tmp_vec[0];
+    if (cos_value > 1.0f) {
+        cos_value = 1.0f;
+    }
+    if (cos_value < -1.0f) {
+        cos_value = -1.0f;
+    }
+    
+    int angle = floor(acos(cos_value) * 180.0f / PI);
+    
+    if (tmp_vec[1] < 0) {
+        angle = 360 - angle;
+    }
+    
+    return angle;
+}
+
 int increaseHeadingBy(int delta_heading,
                       const int orig_heading){
     if (orig_heading < 0 || orig_heading > 360) {
@@ -135,4 +220,173 @@ int decreaseHeadingBy(int delta_heading,
     }
     
     return (orig_heading - delta_heading + 360) % 360;
+}
+
+void peakDetector(vector<float>& hist,
+                  int            window,
+                  float          ratio,
+                  vector<int>&   peak_idxs,
+                  bool           is_closed){
+    // Detecting peaks in a histogram
+    // is_closed: true - loop around; false: do not loop around.
+    // ratio should be >= 1.0f
+    peak_idxs.clear();
+
+    vector<pair<int, float>> raw_peak_idxs;
+    int left_offset = window / 2;
+    int right_offset = window - left_offset;
+    
+    if(is_closed){
+        for (int i = 0; i < hist.size(); ++i) {
+            int start_idx = i - left_offset;
+            int right_idx = i + right_offset;
+            
+            bool is_max = true;
+            float min_value = 1e6;
+            float avg_value = 0.0;
+            int count = 0;
+            for (int j = start_idx; j <= right_idx; ++j) {
+                if(j == i) 
+                    continue;
+
+                int hist_idx = j;
+                if (hist_idx < 0) {
+                    hist_idx += hist.size();
+                }
+                if (hist_idx >= hist.size()) {
+                    hist_idx = hist_idx % hist.size();
+                }
+                if (hist[hist_idx] > hist[i]) {
+                    is_max = false;
+                    break;
+                }
+                if (hist[hist_idx] < min_value) {
+                    min_value = hist[hist_idx];
+                }
+                avg_value += hist[hist_idx];
+                count += 1;
+            }
+            
+            if (is_max) {
+                if (count == 0) {
+                    continue;
+                }
+                avg_value /= count;
+                float d1 = hist[i] - min_value;
+                float d2 = avg_value - min_value;
+                
+                if (d1 > ratio * d2) {
+                    raw_peak_idxs.push_back(pair<int, float>(i, hist[i]));
+                }
+            }
+        }
+    }
+    else{
+        for (int i = 0; i < hist.size(); ++i) {
+            int start_idx = i - left_offset;
+            int right_idx = i + right_offset;
+            if (start_idx < 0) {
+                start_idx = 0;
+            }
+            if (right_idx >= hist.size()) {
+                right_idx = hist.size() - 1;
+            }
+            
+            bool is_max = true;
+            float min_value = 1e6;
+            float avg_value = 0.0;
+            int count = 0;
+            for (int j = start_idx; j <= right_idx; ++j) {
+                if(i == j) 
+                    continue;
+
+                int hist_idx = j;
+                
+                if (hist[hist_idx] > hist[i]) {
+                    is_max = false;
+                    break;
+                }
+                
+                if (hist[hist_idx] < min_value) {
+                    min_value = hist[hist_idx];
+                }
+                avg_value += hist[hist_idx];
+                count += 1;
+            }
+            
+            if (is_max) {
+                if (count == 0) {
+                    continue;
+                }
+                avg_value /= count;
+                float d1 = hist[i] - min_value;
+                float d2 = avg_value - min_value;
+                
+                if (d1 > ratio * d2) {
+                    raw_peak_idxs.push_back(pair<int, float>(i, hist[i]));
+                }
+            }
+        }
+    }
+
+    std::sort(raw_peak_idxs.begin(), raw_peak_idxs.end(),
+            [](const pair<int, float>&a, const pair<int, float>&b) -> bool{
+                return a.second > b.second;
+            }); 
+    for(int i = 0; i < raw_peak_idxs.size(); ++i){
+        if(i > 0){
+            int delta_to_previous = abs(raw_peak_idxs[i-1].first - raw_peak_idxs[i].first);
+            if(is_closed){
+                if(delta_to_previous > 0.5f * hist.size()){
+                    delta_to_previous = hist.size() - delta_to_previous;
+                }
+            }
+            if(delta_to_previous > 0.5f * window){
+                peak_idxs.emplace_back(raw_peak_idxs[i].first);
+            }
+        }
+        else{
+            peak_idxs.emplace_back(raw_peak_idxs[i].first);
+        }
+    }
+
+    // Debug
+    //if (!is_closed) {
+    //    cout << "hist: "<<endl;
+    //    cout << "\t";
+    //    for (size_t i = 0; i < hist.size(); ++i) {
+    //        cout << hist[i] << ", ";
+    //    }
+    //    cout << endl;
+    //    cout << "\t";
+    //    for (size_t i = 0; i < peak_idxs.size(); ++i) {
+    //        cout << peak_idxs[i] << ", ";
+    //    }
+    //    cout << endl;
+    //    cout << endl;
+    //}
+}
+
+// Intersection of two line segments: p11->p12 and p21->p22
+Eigen::Vector2d lineSegmentIntersection(Eigen::Vector2d p11, Eigen::Vector2d p12,
+        Eigen::Vector2d p21, Eigen::Vector2d p22){
+    // Line equations 
+    double a1 = p12[1] - p11[1];
+    double b1 = p11[0] - p12[0];
+    double c1 = p12[0]*p11[1] - p11[0]*p12[1];
+
+    double a2 = p22[1] - p21[1];
+    double b2 = p21[0] - p22[0];
+    double c2 = p22[0]*p21[1] - p21[0]*p22[1];
+
+    double denominator = a1*b2 - a2*b1;
+
+    if(abs(denominator) < 1e-5) { 
+        return Eigen::Vector2d(POSITIVE_INFINITY, POSITIVE_INFINITY);     
+    } 
+    else{
+        double x = (b1*c2 - b2*c1) / denominator;
+        double y = (a2*c1 - a1*c2) / denominator;
+        return Eigen::Vector2d(x, y);
+    }
 }

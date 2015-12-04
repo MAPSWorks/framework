@@ -10,6 +10,7 @@
 
 #include <QOpenGLFramebufferObject>
 #include "headers.h"
+#include "common.h"
 
 using namespace std;
 

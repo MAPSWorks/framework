@@ -82,6 +82,9 @@ void Trajectories::update(float delta){
 }
 
 void Trajectories::render(unique_ptr<Shader>& shader){
+    if(params::inst().boundBox.updated) { 
+        prepareForRendering(); 
+    } 
     glm::mat4 model(1.0f);
 
     shader->setMatrix("matModel", model);
@@ -142,7 +145,7 @@ void Trajectories::updatePointVBO(){
         vertexData.push_back(newPt);
     } 
     m_vboPoints->setData(vertexData,
-                        GL_POINTS);
+                         GL_POINTS);
 }
 
 void Trajectories::updateAnimateVBO(){

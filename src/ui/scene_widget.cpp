@@ -58,7 +58,7 @@ void SceneWidget::slotLoadTrajectories(){
     m_openingFile = true;
     QString filename = QFileDialog::getOpenFileName(&MainWindow::getInstance(),
                                                     "Load trajectories from file",
-                                                    "./",
+                                                    defaultTrajDir.c_str(),
                                                     tr("Trajecotries (*.pbf)"));
     if(filename.isEmpty())
         return;
@@ -88,7 +88,7 @@ void SceneWidget::slotLoadOpenStreetMap(){
     m_openingFile = true;
     QString filename = QFileDialog::getOpenFileName(&MainWindow::getInstance(),
                                                     "Load OpenStreetMap from file",
-                                                    "./",
+                                                    defaultOSMDir.c_str(),
                                                     tr("OpenStreetMap (*.osm)"));
     if(filename.isEmpty())
         return;
@@ -135,6 +135,7 @@ void SceneWidget::slotClear(){
     } 
     resetBBOX();
     params::inst().boundBox.updated = true;
+    update();
 }
 
 /*=====================================================================================
