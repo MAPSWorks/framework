@@ -56,9 +56,9 @@ glm::vec3 BBOXNormalize(float x, float y, float z){
         l = lz; 
     } 
 
-    float newX = (x - minBBOX.x) / l * 2.0f - 1.0f;
-    float newY = (y - minBBOX.y) / l * 2.0f - 1.0f;
-    float newZ = (y - minBBOX.z) / l * 2.0f - 1.0f;
+    float newX = (2.0 * x - minBBOX.x - maxBBOX.x) / l;
+    float newY = (2.0 * y - minBBOX.y - maxBBOX.y) / l;
+    float newZ = (2.0 * z - minBBOX.z - maxBBOX.z) / l; 
 
     return glm::vec3(newX, newY, newZ);
 }

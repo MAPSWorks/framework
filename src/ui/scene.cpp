@@ -53,13 +53,6 @@ void Scene::init()
                                             0.2f * scale)));
 	m_niceGrid.reset(new NiceGrid(params::inst().scale, 40.0f)); 
 
-    //unique_ptr<Object> sphere(new Object("../data/Objs/sphere.obj", 
-    //                                     glm::vec3(0.0f, 1.0f, 0.0f), 
-    //                                     glm::vec3(1.0f, 1.0f, 1.0f), 
-    //                                     glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 
-    //                                     glm::vec4(0.2f, 0.596f, 0.859f, 1.0f)));
-    //m_objects.push_back(std::move(sphere));
-
     m_model.reset(new Model("../data/Models/teapot.obj"));
 
     m_trajectories.reset(new Trajectories());
@@ -72,9 +65,11 @@ void Scene::renderWorld(const Transform &trans)
 {
     unique_ptr<Shader>& default_shader = ResourceManager::inst().getShader("default");
     default_shader->bind();
+        default_shader->selectSubroutine("renderPlain", GL_FRAGMENT_SHADER);
         default_shader->setMatrix("matModel", glm::mat4(1.0f));
         default_shader->setMatrix("matViewProjection", trans.matViewProjection);
         m_light->render(default_shader);
+        m_osmMap->render(default_shader);
         //m_cameraManager->renderCameras(default_shader);
     default_shader->release();
 }

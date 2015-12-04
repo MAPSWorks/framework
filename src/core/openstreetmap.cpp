@@ -118,7 +118,7 @@ class MyHandlerClass : public osmium::handler::Handler{
     private:
         vector<pair<double, double>>          nodes_;
         vector<OsmWay>                        ways_;
-        map<uint64_t, size_t>                 node_table_;
+        map<int64_t, size_t>                  node_table_;
 };
 
 OpenStreetMap::OpenStreetMap()
@@ -126,8 +126,8 @@ OpenStreetMap::OpenStreetMap()
       m_searchTree(new pcl::search::FlannSearch<MapPointType>(false)),
       m_interpolation(10.0f),
       m_dataUpdated(false),
-      m_pointVBO(new RenderableObject),
-      m_lineVBO(new RenderableObject)
+      m_vboPoints(new RenderableObject),
+      m_vboLines(new RenderableObject)
 {
 }
 
@@ -161,6 +161,7 @@ bool OpenStreetMap::load(const string& filename){
             else{
                 // Add a new node
                 v = boost::add_vertex(m_graph);
+                vertex_table[a_way.node_idxs[i]] = v;
                 float easting, northing;
                 latlon_converter.convertLatLonToXY(node_loc.first, node_loc.second, easting, northing);
                 m_graph[v].easting  = easting;
@@ -209,6 +210,7 @@ bool OpenStreetMap::load(const string& filename){
 
     updateBBOX(m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
     printf("OpenStreetMap Loaded, there are %lu ways, %lu nodes\n", handler.getWays().size(), handler.getNodes().size());
+    printf("\tThe graph has %lu nodes, %lu edges\n", boost::num_vertices(m_graph), boost::num_edges(m_graph));
     printf("\tupdated bbox: %.2f, %.2f, %.2f, %.2f\n", m_boundBox[0], m_boundBox[1], m_boundBox[2], m_boundBox[3]);
 
     return true;
@@ -283,19 +285,19 @@ void OpenStreetMap::interpolateMap(){
 // Rendering
 void OpenStreetMap::render(unique_ptr<Shader>& shader){
     glm::mat4 model(1.0f);
-
     shader->setMatrix("matModel", model);
 
     // Render Points
     glPointSize(10.0f);    
-    m_pointVBO->render();
+    m_vboPoints->render();
     glPointSize(1.0f);    
 
     // Render Lines
-    m_lineVBO->render();
+    m_vboLines->render();
 }
 
 void OpenStreetMap::prepareForRendering(){
+    float scale = params::inst().scale;
     vector<RenderableObject::Vertex> vertexData;
     auto es = boost::edges(m_graph);
     for(auto eit = es.first; eit != es.second; ++eit) { 
@@ -310,22 +312,22 @@ void OpenStreetMap::prepareForRendering(){
                                                     m_graph[target_v].northing, 0.0);
 
         RenderableObject::Vertex source_pt, target_pt;
-        source_pt.Position.x = normalizedSourceV.x * 100;
-        source_pt.Position.y = 1.0f;
-        source_pt.Position.z = -normalizedSourceV.y * 100;
-        source_pt.Color = edge_color;
+        source_pt.Position = glm::vec3(normalizedSourceV.x * scale,
+                                       1.0f,
+                                       -normalizedSourceV.y * scale);
+        source_pt.Color    = edge_color;
 
-        target_pt.Position.x = normalizedTargetV.x * 100;
-        target_pt.Position.y = 1.0f;
-        target_pt.Position.z = -normalizedTargetV.y * 100;
-        target_pt.Color = edge_color;
+        target_pt.Position = glm::vec3(normalizedTargetV.x * scale,
+                                       1.0f,
+                                       -normalizedTargetV.y * scale);
+        target_pt.Color    = edge_color;
+
         vertexData.push_back(source_pt);
         vertexData.push_back(target_pt);
     }
-    m_pointVBO->setData(vertexData,
-                        GL_POINTS);
+    m_vboPoints->setData(vertexData, GL_POINTS);
 
-    m_lineVBO->setData(vertexData,
+    m_vboLines->setData(vertexData,
                        GL_LINES);
     m_dataUpdated = true;
 }

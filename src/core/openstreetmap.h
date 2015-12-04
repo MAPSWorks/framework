@@ -16,7 +16,6 @@
 #include <pcl/search/search.h>
 
 #include "pcl_wrapper.h"
-#include <Eigen/Dense> 
 
 class Shader;
 class RenderableObject;
@@ -59,6 +58,11 @@ class OpenStreetMap {
         // Publicly available data
         vector<graph_vertex_descriptor>         m_graphVertices;
         Eigen::Vector4f                         m_boundBox; // [minX, maxX, minY, maxY]
+        // Indexed Roads
+        vector<vector<graph_vertex_descriptor>> m_indexedRoads;
+
+        // Routing graph
+        graph_t                                 m_graph;
 
         // Below is only valid after running interpolateMap()
         pcl::PointCloud<MapPointType>::Ptr      m_mapPoints; 
@@ -68,16 +72,10 @@ class OpenStreetMap {
     private: 
         float                                   m_interpolation;
 
-        // Indexed Roads
-        vector<vector<graph_vertex_descriptor>> m_indexedRoads;
-
-        // Routing graph
-        graph_t                                 m_graph; 
-
         // Rendering
         bool                                    m_dataUpdated;
-        unique_ptr<RenderableObject>   m_pointVBO;
-        unique_ptr<RenderableObject>   m_lineVBO;
+        unique_ptr<RenderableObject>            m_vboPoints;
+        unique_ptr<RenderableObject>            m_vboLines;
 }; 
 
 #endif /* end of include guard: OPENSTREETMAP_H_K3GWYIMN */

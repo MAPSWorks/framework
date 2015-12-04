@@ -17,8 +17,8 @@
 Trajectories::Trajectories()
     : m_gpsPoints(new pcl::PointCloud<GpsPointType>),
       m_searchTree(new pcl::search::FlannSearch<GpsPointType>(false)),
-      m_pointVBO(new RenderableObject),
-      m_animateVBO(new RenderableObject),
+      m_vboPoints(new RenderableObject),
+      m_vboAnimation(new RenderableObject),
       m_renderMode(POINTS),
       m_animationTime(0.0f)
 {
@@ -81,27 +81,23 @@ void Trajectories::update(float delta){
     } 
 }
 
-void Trajectories::render(unique_ptr<Shader>& shader){
+void Trajectories::render(Shader* shader){
     glm::mat4 model(1.0f);
 
     shader->setMatrix("matModel", model);
 
     switch(m_renderMode) { 
         case POINTS: 
-            glDisable(GL_DEPTH_TEST);
             glPointSize(20.0f); 
-            m_pointVBO->render();
+            m_vboPoints->render();
             glPointSize(1.0f); 
-            glEnable(GL_DEPTH_TEST);
             break; 
         case LINES:
             break; 
         case ANIMATE:
-            glDisable(GL_DEPTH_TEST);
             glPointSize(20.0f); 
-            m_animateVBO->render();
+            m_vboAnimation->render();
             glPointSize(1.0f); 
-            glEnable(GL_DEPTH_TEST);
             break;
         default: 
             break; 
@@ -128,26 +124,24 @@ void Trajectories::updatePointVBO(){
     vector<RenderableObject::Vertex> vertexData;
     glm::vec4 color(1.0f, 1.0f, 0.0f, 0.3f);
 
+    float scale = params::inst().scale;
     for(size_t i = 0; i < m_easting.size(); ++i) { 
         RenderableObject::Vertex newPt;
         glm::vec3 normalizedV = BBOXNormalize(m_easting[i], m_northing[i], 0.0);
-        newPt.Position.x  = normalizedV.x * 100; 
-        newPt.Position.y  = m_speed[i] / 500.0f;
-        newPt.Position.z  = -normalizedV.y * 100;
+        newPt.Position = glm::vec3(normalizedV.x * scale,
+                                   1.0f,
+                                   -normalizedV.y * scale);
 
         float ratio = (m_speed[i] * m_speed[i]) / 1e6;
         if(ratio > 1.0f)
             ratio = 1.0f;
         if(ratio < 0.1f)
             ratio = 0.1f;
+        newPt.Color = glm::vec4(ratio, 1.0f, 1.0f - ratio, color.w);
 
-        newPt.Color.x = ratio;
-        newPt.Color.y = 1.0f;
-        newPt.Color.z = 1.0f - ratio;
-        newPt.Color.w = color.w;
         vertexData.push_back(newPt);
     } 
-    m_pointVBO->setData(vertexData,
+    m_vboPoints->setData(vertexData,
                         GL_POINTS);
 }
 
@@ -159,6 +153,7 @@ void Trajectories::updateAnimateVBO(){
     float t_window = 100.0f;
 
     float cur_t = m_animationTime / 10.0f;
+    float scale = params::inst().scale;
     for(size_t i = 0; i < m_indexedTraj.size(); ++i) { 
         vector<size_t>& traj = m_indexedTraj[i]; 
 
@@ -174,9 +169,9 @@ void Trajectories::updateAnimateVBO(){
 
             RenderableObject::Vertex newPt;
             glm::vec3 normalizedV = BBOXNormalize(m_easting[traj[j]], m_northing[traj[j]], 0.0);
-            newPt.Position.x = normalizedV.x * 100; 
-            newPt.Position.y  = 1.0f;
-            newPt.Position.z = -normalizedV.y * 100;
+            newPt.Position = glm::vec3(normalizedV.x * scale,
+                                   1.0f,
+                                   -normalizedV.y * scale);
 
             float ratio = (dt - cur_t + t_window) / t_window;
             if(ratio > 1.0f)
@@ -185,7 +180,6 @@ void Trajectories::updateAnimateVBO(){
                 ratio = 0.0f;
 
             newPt.Color = glm::vec4(ratio, 1.0f, 1.0f - ratio, color.w);
-
             vertexData.push_back(newPt);
         } 
         if(dt > max_deltaT) { 
@@ -197,7 +191,7 @@ void Trajectories::updateAnimateVBO(){
         m_animationTime = 0; 
     } 
 
-    m_animateVBO->setData(vertexData,
+    m_vboAnimation->setData(vertexData,
                           GL_POINTS);
 }
 /*=====================================================================================
