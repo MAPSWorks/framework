@@ -81,7 +81,7 @@ void Trajectories::update(float delta){
     } 
 }
 
-void Trajectories::render(Shader* shader){
+void Trajectories::render(unique_ptr<Shader>& shader){
     glm::mat4 model(1.0f);
 
     shader->setMatrix("matModel", model);
