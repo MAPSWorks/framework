@@ -29,6 +29,12 @@ public:
                                    const char *gFileName, 
                                    const char *fFileName,
                                    string name);
+    unique_ptr<Shader>& loadShader(const char *vFileName, 
+                                   const char *tcFileName, 
+                                   const char *teFileName, 
+                                   const char *gFileName, 
+                                   const char *fFileName,
+                                   string name);
 
     // Retrieve shader
     unique_ptr<Shader>& getShader(string name);

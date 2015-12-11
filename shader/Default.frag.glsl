@@ -14,7 +14,7 @@ subroutine void RenderPassType();
 subroutine uniform RenderPassType RenderPass;
 
 // Render without texture 
-subroutine (RenderPassType)                             
+subroutine (RenderPassType)                   
     void renderPlain(){                               
         FragColor = pow(VertColor, vec4(1.0 / gamma));
     }

@@ -54,6 +54,7 @@ private:
 
     int                             m_activeIdx;
 
+    unique_ptr<RenderableObject>    m_vboTest;
 	//TransformFeedback *m_tfb;
 };
 

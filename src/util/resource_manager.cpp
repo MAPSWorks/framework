@@ -18,6 +18,20 @@ unique_ptr<Shader>& ResourceManager::loadShader(const char *vFileName,
     return m_shaders[name];
 }
 
+unique_ptr<Shader>& ResourceManager::loadShader(const char *vFileName, 
+                                                const char *tcFileName, 
+                                                const char *teFileName, 
+                                                const char *gFileName, 
+                                                const char *fFileName,
+                                                string name){
+    m_shaders[name].reset(new Shader(vFileName,
+                                     tcFileName,
+                                     teFileName,
+                                     gFileName,
+                                     fFileName));
+    return m_shaders[name];
+}
+
 unique_ptr<Shader>& ResourceManager::getShader(string name){
     if(m_shaders.find(name) == m_shaders.end()) { 
         cout << "ERROR: cannot find shader with name: " << name << endl; 
