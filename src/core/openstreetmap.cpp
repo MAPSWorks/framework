@@ -299,18 +299,11 @@ void OpenStreetMap::prepareForRendering() {
         auto source_v = source(*eit, m_graph);
         auto target_v = target(*eit, m_graph);
 
-        glm::vec3 normalizedSourceV = BBOXNormalize(
-            m_graph[source_v].easting, m_graph[source_v].northing, 0.0);
-        glm::vec3 normalizedTargetV = BBOXNormalize(
-            m_graph[target_v].easting, m_graph[target_v].northing, 0.0);
-
         RenderableObject::Vertex source_pt, target_pt;
-        source_pt.Position = glm::vec3(normalizedSourceV.x * scale, 1.0f,
-                                       -normalizedSourceV.y * scale);
+        source_pt.Position = convertToDisplayCoord(m_graph[source_v].easting, m_graph[source_v].northing, 1.0f);
         source_pt.Color = edge_color;
 
-        target_pt.Position = glm::vec3(normalizedTargetV.x * scale, 1.0f,
-                                       -normalizedTargetV.y * scale);
+        target_pt.Position = convertToDisplayCoord(m_graph[target_v].easting, m_graph[target_v].northing, 1.0f);
         target_pt.Color = edge_color;
 
         vertexData.push_back(source_pt);
