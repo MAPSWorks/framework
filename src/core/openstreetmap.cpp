@@ -307,6 +307,7 @@ void OpenStreetMap::prepareForRendering() {
             neighbors.emplace(boost::target(*eit, m_graph)); 
         }  
         int n_neighbors = neighbors.size();
+        m_graph[*vit].nNeighbors = n_neighbors;
         if(n_neighbors == 1 || n_neighbors > 2) { 
             RenderableObject::Vertex pt;
             pt.Position = convertToDisplayCoord(m_graph[*vit].easting, m_graph[*vit].northing, 1.01f); 

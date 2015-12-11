@@ -41,7 +41,7 @@ void Scene::init() {
     float scale = params::inst().scale;
     m_light.reset(
         new Light(this, glm::vec3(-0.4f * scale, scale, 0.2f * scale)));
-    m_niceGrid.reset(new NiceGrid(params::inst().scale, 40.0f));
+    m_niceGrid.reset(new NiceGrid(params::inst().scale, 20.0f));
 
     m_model.reset(new Model("../data/Models/nanosuit/nanosuit.obj"));
 

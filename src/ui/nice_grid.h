@@ -26,6 +26,7 @@ public:
 
 private:
     void createVBO();
+    void updateVBO();
 
 private:
     GLuint                    m_texID;

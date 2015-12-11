@@ -30,6 +30,7 @@ const string defaultOSMDir = "/Users/chenchen/Research/data/openstreetmap";
 struct GraphNode {
     float easting;
     float northing;
+    int   nNeighbors = 0;
 };
 
 struct GraphEdge {
