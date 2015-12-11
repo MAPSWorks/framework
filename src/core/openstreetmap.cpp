@@ -291,7 +291,30 @@ void OpenStreetMap::render(unique_ptr<Shader>& shader) {
 
 void OpenStreetMap::prepareForRendering() {
     float scale = params::inst().scale;
-    vector<RenderableObject::Vertex> vertexData;
+    vector<RenderableObject::Vertex> lineData;
+    vector<RenderableObject::Vertex> pointData;
+
+    glm::vec4 vertex_color(1.0f, 1.0f, 0.0f, 0.7f);
+    auto vs = boost::vertices(m_graph);
+    for(auto vit = vs.first; vit != vs.second; ++vit) { 
+        auto out_es = boost::out_edges(*vit, m_graph);
+        auto in_es = boost::in_edges(*vit, m_graph);
+        set<graph_vertex_descriptor> neighbors;
+        for(auto eit = in_es.first ; eit != in_es.second; ++eit) { 
+            neighbors.emplace(boost::source(*eit, m_graph));
+        } 
+        for(auto eit = out_es.first; eit != out_es.second; ++eit) { 
+            neighbors.emplace(boost::target(*eit, m_graph)); 
+        }  
+        int n_neighbors = neighbors.size();
+        if(n_neighbors == 1 || n_neighbors > 2) { 
+            RenderableObject::Vertex pt;
+            pt.Position = convertToDisplayCoord(m_graph[*vit].easting, m_graph[*vit].northing, 1.01f); 
+            pt.Color = vertex_color;
+            pointData.push_back(pt); 
+        }
+    } 
+
     auto es = boost::edges(m_graph);
     for (auto eit = es.first; eit != es.second; ++eit) {
         glm::vec4 edge_color = getWayColor(m_graph[*eit].type);
@@ -306,12 +329,12 @@ void OpenStreetMap::prepareForRendering() {
         target_pt.Position = convertToDisplayCoord(m_graph[target_v].easting, m_graph[target_v].northing, 1.0f);
         target_pt.Color = edge_color;
 
-        vertexData.push_back(source_pt);
-        vertexData.push_back(target_pt);
+        lineData.push_back(source_pt);
+        lineData.push_back(target_pt);
     }
-    m_vboPoints->setData(vertexData, GL_POINTS);
+    m_vboPoints->setData(pointData, GL_POINTS);
 
-    m_vboLines->setData(vertexData, GL_LINES);
+    m_vboLines->setData(lineData, GL_LINES);
     m_dataUpdated = true;
 }
 
