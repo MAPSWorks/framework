@@ -20,6 +20,7 @@ uniform sampler2D           DiffTex1;
 // uniform
 uniform vec3                camPos;
 uniform vec3                OffsetTexSize; // (width, height, depth)
+uniform float               gamma; // Gamma correction
 
 struct LightInfo {
     vec3 Position;
@@ -100,7 +101,7 @@ subroutine (RenderPassType)
 
         vec4 texColor = texture(DiffTex1, GTexCoords);             
         vec4 ambAndDiff = vec4(ambient + diffuse, 1.0) * texColor;
-        FragColor = ambAndDiff + vec4(spec, 1.0);
+        FragColor = pow(ambAndDiff + vec4(spec, 1.0), vec4(1.0 / gamma));
     }
 
 // Shading without shadow, plus wire frame
@@ -125,7 +126,7 @@ subroutine (RenderPassType)
         vec4 outColor = (diffWithTex + vec4(spec, 1.0))
                         + ambWithTex;
             
-        FragColor = mix( lineColor, outColor, mixVal );
+        FragColor = pow(mix( lineColor, outColor, mixVal ), vec4(1.0 / gamma));
     }
 
 // Shading with shadow (without using texture)
@@ -139,8 +140,11 @@ subroutine (RenderPassType)
         vec4 ambWithTex = vec4(ambient, 1.0) * texColor;            
         vec4 diffWithTex = vec4(diffuse, 1.0) * texColor;
 
-        FragColor = (diffWithTex + vec4(spec, 1.0)) * (1.0 - shadow)
+        vec4 color = (diffWithTex + vec4(spec, 1.0)) * (1.0 - shadow)
                     + ambWithTex;;
+
+        //FragColor = vec4(pow(color.xyz, vec3(1.0 / 2.0)), 1.0);
+        FragColor = pow(color, vec4(1.0 / gamma));
     }
 
 // Shading with shadow and wire frame
@@ -165,7 +169,7 @@ subroutine (RenderPassType)
 
         vec4 outColor = (diffWithTex + vec4(spec, 1.0)) * (1.0 - shadow)
                         + ambWithTex;
-        FragColor = mix( lineColor, outColor, mixVal );                              
+        FragColor = pow(mix( lineColor, outColor, mixVal ), vec4(1.0 / gamma));
     }                                                               
 
 void main()

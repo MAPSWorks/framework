@@ -8,6 +8,7 @@ in vec4 VertColor;
 out vec4 FragColor;
 
 uniform sampler2D DiffTex1;
+uniform float     gamma; // Gamma correction
 
 subroutine void RenderPassType();
 subroutine uniform RenderPassType RenderPass;
@@ -15,13 +16,13 @@ subroutine uniform RenderPassType RenderPass;
 // Render without texture 
 subroutine (RenderPassType)                             
     void renderPlain(){                               
-        FragColor = VertColor;
+        FragColor = pow(VertColor, vec4(1.0 / gamma));
     }
 
 // Render with texture 
 subroutine (RenderPassType)                             
     void renderWithTexture(){                               
-        FragColor = texture(DiffTex1, TexCoords);
+        FragColor = pow(texture(DiffTex1, TexCoords), vec4(1.0 / gamma));
     }
 
 void main()

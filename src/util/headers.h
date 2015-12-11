@@ -76,6 +76,8 @@ struct GlobalObjectParams {
     int polygonMode = 0;     // 0: normal; 1: wire frame
     int gridRenderMode = 0;  // 0: texture; 1: white color
 
+    float gamma = 2.2f; // Gamma correction
+
     BoundingBox boundBox;
     ShadowInfo shadowInfo;
 };

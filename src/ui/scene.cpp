@@ -53,7 +53,7 @@ void Scene::init()
                                             0.2f * scale)));
 	m_niceGrid.reset(new NiceGrid(params::inst().scale, 40.0f)); 
 
-    m_model.reset(new Model("../data/Models/teapot.obj"));
+    m_model.reset(new Model("../data/Models/nanosuit/nanosuit.obj"));
 
     m_trajectories.reset(new Trajectories());
     m_osmMap.reset(new OpenStreetMap());
@@ -68,6 +68,7 @@ void Scene::renderWorld(const Transform &trans)
         default_shader->selectSubroutine("renderPlain", GL_FRAGMENT_SHADER);
         default_shader->setMatrix("matModel", glm::mat4(1.0f));
         default_shader->setMatrix("matViewProjection", trans.matViewProjection);
+        default_shader->setf("gamma", params::inst().gamma);
         m_light->render(default_shader);
         m_osmMap->render(default_shader);
         //m_cameraManager->renderCameras(default_shader);
@@ -108,6 +109,7 @@ void Scene::renderObjects(const Transform &trans)
     model_shader->setMatrix("matLightSpace", trans.matLightSpace);
      
     model_shader->setMatrix("matViewport", matViewport);
+    model_shader->setf("gamma", params::inst().gamma);
 
     model_shader->set3f("camPos", m_cameraManager->currentCamPos());
     model_shader->set3f("OffsetTexSize", params::inst().shadowInfo.offsetTexSize());
@@ -174,7 +176,7 @@ void Scene::renderObjects(const Transform &trans)
     model_shader->seti("DiffTex1", 2);
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(10.0, 10.0, 10.0));
+    //model = glm::scale(model, glm::vec3(10.0, 10.0, 10.0));
     model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
     model_shader->setMatrix("matModel", model);
     matNormal = glm::mat3(glm::inverseTranspose(model));
@@ -206,7 +208,7 @@ void Scene::renderObjectsDepth(const Transform &trans)
 
         // Model
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+        //model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
         model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0f));
         model_shader->setMatrix("matModel", model);
         model_shader->setMatrix("matViewProjection", trans.matViewProjection);
