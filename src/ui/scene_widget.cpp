@@ -64,7 +64,6 @@ void SceneWidget::slotLoadTrajectories(){
         return;
     
     if(m_scene->m_trajectories->load(filename.toStdString())){
-        m_scene->updateDrawingData();
         update();
     }
     m_openingFile = false;
@@ -94,7 +93,6 @@ void SceneWidget::slotLoadOpenStreetMap(){
         return;
     
     if(m_scene->m_osmMap->load(filename.toStdString())){
-        m_scene->updateDrawingData();
         update();
     }
     m_openingFile = false;
@@ -204,6 +202,7 @@ void SceneWidget::paintGL(){
         m_fbo->release();
         m_renderOffline = false;
     } 
+    params::inst().boundBox.updated = false;
 }
 
 void SceneWidget::resizeGL(int width, int height){

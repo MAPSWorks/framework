@@ -66,12 +66,6 @@ void Scene::renderWorld(const Transform& trans) {
 }
 
 void Scene::renderObjects(const Transform& trans) {
-    if (params::inst().boundBox.updated) {
-        m_trajectories->prepareForRendering();
-        m_osmMap->prepareForRendering();
-        params::inst().boundBox.updated = false;
-    }
-
     glm::mat3 matNormal;
     glm::mat4 matShadow(1.0f);
     glm::mat4 matViewport(1.0f);
@@ -219,11 +213,6 @@ void Scene::renderObjectsDepth(const Transform& trans) {
 void Scene::update(float delta) {
     // m_light->update(delta);
     m_trajectories->update(delta);
-}
-
-void Scene::updateDrawingData() {
-    m_trajectories->prepareForRendering();
-    m_osmMap->prepareForRendering();
 }
 
 void Scene::select(const Transform& trans, int sw, int sh, int mx, int my) {

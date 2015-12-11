@@ -19,12 +19,6 @@ public:
     Scene(unique_ptr<CameraManager>& camManager);
     ~Scene();
    
-    // Since there are some shared params for different drawing object. For example,
-    // the normalizing bounding box. Call this whenever there may be a change in 
-    // such params, so that each drawing object have a chance to update their 
-    // vertices data accordingly.
-    void updateDrawingData();
-
 	void update(float delta);
     void initShaders();
     void init();
