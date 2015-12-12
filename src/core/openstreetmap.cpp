@@ -82,11 +82,11 @@ public:
             } else if (strcmp(highway_type, "tertiary_link") == 0) {
                 a_way.type = WayType::TERTIARY_LINK;
             } else {
-                if (strcmp(highway_type, "unclassified") == 0 || 
-                        strcmp(highway_type, "residential") == 0 ||
-                        strcmp(highway_type, "road") == 0)
+                if (strcmp(highway_type, "unclassified") == 0 ||
+                    strcmp(highway_type, "residential") == 0 ||
+                    strcmp(highway_type, "road") == 0)
                     a_way.type = WayType::OTHER;
-                else{
+                else {
                     return;
                 }
             }
@@ -210,10 +210,11 @@ bool OpenStreetMap::load(const string& filename) {
     return true;
 }
 
-void OpenStreetMap::interpolateMap() {
+void OpenStreetMap::computeMapPointCloud() {
     m_mapPoints->clear();
     m_pointHeading.clear();
     m_graphVertices.clear();
+    m_pointEdgeIds.clear();
     printf("Start interpolating OpenStreetMap with %.1f meter accuracy......",
            m_interpolation);
     // Iterate over the edges
@@ -241,6 +242,7 @@ void OpenStreetMap::interpolateMap() {
         m_mapPoints->push_back(point);
         m_pointHeading.push_back(heading);
         m_graphVertices.push_back(source_v);
+        m_pointEdgeIds.push_back(*eit);
 
         if (m_graph[*eit].length > m_interpolation) {
             // Insert point
@@ -253,6 +255,7 @@ void OpenStreetMap::interpolateMap() {
                 point.setCoordinate(pt[0], pt[1], 0.0f);
                 m_mapPoints->push_back(point);
                 m_pointHeading.push_back(heading);
+                m_pointEdgeIds.push_back(*eit);
                 if (i < n_pt_to_insert / 2) {
                     m_graphVertices.push_back(source_v);
                 } else {
@@ -266,6 +269,7 @@ void OpenStreetMap::interpolateMap() {
         m_mapPoints->push_back(point);
         m_pointHeading.push_back(heading);
         m_graphVertices.push_back(target_v);
+        m_pointEdgeIds.push_back(*eit);
     }
 
     m_searchTree->setInputCloud(m_mapPoints);
@@ -275,7 +279,7 @@ void OpenStreetMap::interpolateMap() {
 // Rendering
 void OpenStreetMap::render(unique_ptr<Shader>& shader) {
     if (params::inst().boundBox.updated) {
-        prepareForRendering();
+        updateVBO();
     }
     glm::mat4 model(1.0f);
     shader->setMatrix("matModel", model);
@@ -289,32 +293,33 @@ void OpenStreetMap::render(unique_ptr<Shader>& shader) {
     m_vboLines->render();
 }
 
-void OpenStreetMap::prepareForRendering() {
+void OpenStreetMap::updateVBO() {
     float scale = params::inst().scale;
     vector<RenderableObject::Vertex> lineData;
     vector<RenderableObject::Vertex> pointData;
 
-    glm::vec4 vertex_color(1.0f, 1.0f, 0.0f, 0.7f);
+    glm::vec4 vertex_color(1.0f, 1.0f, 0.0f, 0.5f);
     auto vs = boost::vertices(m_graph);
-    for(auto vit = vs.first; vit != vs.second; ++vit) { 
+    for (auto vit = vs.first; vit != vs.second; ++vit) {
         auto out_es = boost::out_edges(*vit, m_graph);
         auto in_es = boost::in_edges(*vit, m_graph);
         set<graph_vertex_descriptor> neighbors;
-        for(auto eit = in_es.first ; eit != in_es.second; ++eit) { 
+        for (auto eit = in_es.first; eit != in_es.second; ++eit) {
             neighbors.emplace(boost::source(*eit, m_graph));
-        } 
-        for(auto eit = out_es.first; eit != out_es.second; ++eit) { 
-            neighbors.emplace(boost::target(*eit, m_graph)); 
-        }  
+        }
+        for (auto eit = out_es.first; eit != out_es.second; ++eit) {
+            neighbors.emplace(boost::target(*eit, m_graph));
+        }
         int n_neighbors = neighbors.size();
         m_graph[*vit].nNeighbors = n_neighbors;
-        if(n_neighbors == 1 || n_neighbors > 2) { 
+        if (n_neighbors == 1 || n_neighbors > 2) {
             RenderableObject::Vertex pt;
-            pt.Position = convertToDisplayCoord(m_graph[*vit].easting, m_graph[*vit].northing, 1.01f); 
+            pt.Position = convertToDisplayCoord(m_graph[*vit].easting,
+                                                m_graph[*vit].northing, 1.01f);
             pt.Color = vertex_color;
-            pointData.push_back(pt); 
+            pointData.push_back(pt);
         }
-    } 
+    }
 
     auto es = boost::edges(m_graph);
     for (auto eit = es.first; eit != es.second; ++eit) {
@@ -324,10 +329,12 @@ void OpenStreetMap::prepareForRendering() {
         auto target_v = target(*eit, m_graph);
 
         RenderableObject::Vertex source_pt, target_pt;
-        source_pt.Position = convertToDisplayCoord(m_graph[source_v].easting, m_graph[source_v].northing, 1.0f);
+        source_pt.Position = convertToDisplayCoord(
+            m_graph[source_v].easting, m_graph[source_v].northing, 1.0f);
         source_pt.Color = edge_color;
 
-        target_pt.Position = convertToDisplayCoord(m_graph[target_v].easting, m_graph[target_v].northing, 1.0f);
+        target_pt.Position = convertToDisplayCoord(
+            m_graph[target_v].easting, m_graph[target_v].northing, 1.0f);
         target_pt.Color = edge_color;
 
         lineData.push_back(source_pt);
@@ -345,11 +352,13 @@ void OpenStreetMap::clear() {
     m_mapPoints->clear();
     m_pointHeading.clear();
     m_graphVertices.clear();
+    m_pointEdgeIds.clear();
 
     m_indexedRoads.clear();
     m_boundBox = Eigen::Vector4f(POSITIVE_INFINITY, -POSITIVE_INFINITY,
                                  POSITIVE_INFINITY, -POSITIVE_INFINITY);
     m_graph.clear();
+    updateVBO();
 }
 
 bool OpenStreetMap::isEmpty() {

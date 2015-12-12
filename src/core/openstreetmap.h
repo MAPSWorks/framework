@@ -43,11 +43,11 @@ public:
     bool load(const string& filename);
 
     // Interpolate map to produce a point cloud for searching
-    void interpolateMap();
+    void computeMapPointCloud();
 
     // Rendering
     void render(unique_ptr<Shader>& shader);
-    void prepareForRendering();
+    void updateVBO();
 
     // Clear data
     void clear();
@@ -66,8 +66,10 @@ public:
 
     // Below is only valid after running interpolateMap()
     pcl::PointCloud<MapPointType>::Ptr m_mapPoints;
-    vector<int> m_pointHeading;
     pcl::search::Search<MapPointType>::Ptr m_searchTree;
+    vector<int> m_pointHeading;  // Lookup heading
+    vector<graph_edge_descriptor>
+        m_pointEdgeIds;  // Lookup graph edge of each mapPoint
 
 private:
     float m_interpolation;
