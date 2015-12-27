@@ -24,6 +24,7 @@ static const float PI = 3.1415926f;
 
 const string defaultDataDir = "/Users/chenchen/Research/data";
 const string defaultTrajDir = "/Users/chenchen/Research/data/trajectories";
+const string defaultVideoTrajDir = "/Users/chenchen/Research/data/driving_video_data";
 const string defaultOSMDir = "/Users/chenchen/Research/data/openstreetmap";
 
 // Map representation

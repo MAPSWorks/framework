@@ -63,7 +63,7 @@ public:
         glm::vec3   Position  = glm::vec3(0.0f, 0.0f, 0.0f);             // Coordinate
         glm::vec3   Normal    = glm::vec3(0.0f, 0.0f, 0.0f);             // Normal vector
         glm::vec4   Color     = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);       // RGBA color
-        glm::vec2   TexCoords = glm::vec2(0.0f, 0.0f);                   // Texture coordinate
+        glm::vec4   TexCoords = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);                   // Texture coordinate
     };
 
 public:

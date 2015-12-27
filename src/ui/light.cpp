@@ -63,12 +63,12 @@ void Light::renderLightView(Transform &trans){
     m_lightSpace                 = transLight.matViewProjection;
 
     // Render depth map
-    glViewport(0, 0, m_bufferWidth, m_bufferHeight);
+    params::inst().glFuncs->glViewport(0, 0, m_bufferWidth, m_bufferHeight);
     m_fboLight->bind();
-        glClear(GL_DEPTH_BUFFER_BIT);     
+        params::inst().glFuncs->glClear(GL_DEPTH_BUFFER_BIT);     
         m_scene->renderObjectsDepth(transLight);        
     m_fboLight->release();
-    glViewport(0, 0, params::inst().windowSize.x, params::inst().windowSize.y);
+    params::inst().glFuncs->glViewport(0, 0, params::inst().windowSize.x, params::inst().windowSize.y);
 
     // Update trans
     trans.matLightSpace = m_lightSpace;

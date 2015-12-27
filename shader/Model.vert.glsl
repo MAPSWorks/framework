@@ -40,7 +40,7 @@
 layout(location = VERT_POSITION) in vec3 VertexPosition;
 layout(location = VERT_NORMAL)   in vec3 VertexNormal;
 layout(location = VERT_COLOR)    in vec4 VertexColor;
-layout(location = VERT_TEXTURE)  in vec2 VertexTexture;
+layout(location = VERT_TEXTURE)  in vec4 VertexTexture;
 
 out vec3 Position;
 out vec2 TexCoords;
@@ -55,7 +55,7 @@ uniform mat4 matLightSpace; // LightProjection * LightView
 void main()
 {	   
     Position  = (matModel * vec4(VertexPosition, 1.0)).xyz;
-    TexCoords = VertexTexture;
+    TexCoords = VertexTexture.xy;
     Normal    = normalize(matNormal * VertexNormal);
 
     // Shadow Matrix converts from modeling coordinates to shadow map coordinates

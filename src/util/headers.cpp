@@ -7,6 +7,18 @@ Created by Chen Chen on 09/28/2015
 
 #include "headers.h"
 
+vector<string> split(string &str, char delimiter) {
+    vector<string> internal;
+    stringstream ss(str);  // Turn the string into a stream.
+    string tok;
+
+    while (getline(ss, tok, delimiter)) {
+        internal.push_back(tok);
+    }
+
+    return internal;
+}
+
 void resetBBOX() {
     params::inst().boundBox.bottomLeft = glm::vec3(1e10, 1e10, 1e10);
     params::inst().boundBox.upperRight = glm::vec3(-1e10, -1e10, -1e10);

@@ -6,8 +6,7 @@
 #include "resource_manager.h"
 
 Scene::Scene(unique_ptr<CameraManager>& camManager)
-    : m_cameraManager(camManager),
-      m_activeIdx(-1) {
+    : m_cameraManager(camManager), m_activeIdx(-1) {
     init();
 }
 
@@ -17,6 +16,9 @@ void Scene::initShaders() {
     ResourceManager::inst().loadShader("../shader/Default.vert.glsl",
                                        "../shader/Default.frag.glsl",
                                        "default");
+    ResourceManager::inst().loadShader("../shader/VideoTrajectory.vert.glsl",
+                                       "../shader/VideoTrajectory.frag.glsl",
+                                       "video_trajectory");
     ResourceManager::inst().loadShader("../shader/DefaultDepth.vert.glsl",
                                        "../shader/DefaultDepth.frag.glsl",
                                        "defaultDepth");
@@ -26,13 +28,13 @@ void Scene::initShaders() {
 
     // Default texture
     ResourceManager::inst().loadTexture("../data/Texture/floor_grey.png",
-                                        GL_REPEAT, "floor_grey");
+                                        "floor_grey");
     ResourceManager::inst().loadTexture("../data/Texture/floor_blue.png",
-                                        GL_REPEAT, "floor_blue");
-    ResourceManager::inst().loadTexture("../data/Texture/floor.png", GL_REPEAT,
+                                        "floor_blue");
+    ResourceManager::inst().loadTexture("../data/Texture/floor.png", 
                                         "floor");
     ResourceManager::inst().loadTexture("../data/Texture/default.png",
-                                        GL_REPEAT, "default");
+                                        "default");
 }
 
 void Scene::init() {
@@ -47,6 +49,7 @@ void Scene::init() {
 
     m_trajectories.reset(new Trajectories());
     m_osmMap.reset(new OpenStreetMap());
+    m_videoTrajectory.reset(new VideoTrajectory());
 
     // ResourceManager::inst().printStats();
 }
@@ -61,8 +64,21 @@ void Scene::renderWorld(const Transform& trans) {
     default_shader->setf("gamma", params::inst().gamma);
     m_light->render(default_shader);
     m_osmMap->render(default_shader);
+
     // m_cameraManager->renderCameras(default_shader);
     default_shader->release();
+
+    unique_ptr<Shader>& video_trajectory_shader =
+        ResourceManager::inst().getShader("video_trajectory");
+    video_trajectory_shader->bind();
+    video_trajectory_shader->selectSubroutine("renderWithTexture",
+                                              GL_FRAGMENT_SHADER);
+    video_trajectory_shader->setMatrix("matModel", glm::mat4(1.0f));
+    video_trajectory_shader->setMatrix("matViewProjection",
+                                       trans.matViewProjection);
+    video_trajectory_shader->setf("gamma", params::inst().gamma);
+    m_videoTrajectory->render(video_trajectory_shader);
+    video_trajectory_shader->release();
 }
 
 void Scene::renderObjects(const Transform& trans) {
@@ -78,11 +94,13 @@ void Scene::renderObjects(const Transform& trans) {
         ResourceManager::inst().getShader("model");
     model_shader->bind();
     // Common uniforms
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, params::inst().shadowInfo.shadowMapID);
+    params::inst().glFuncs->glActiveTexture(GL_TEXTURE0);
+    params::inst().glFuncs->glBindTexture(
+        GL_TEXTURE_2D, params::inst().shadowInfo.shadowMapID);
     model_shader->seti("ShadowMap", 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_3D, params::inst().shadowInfo.offsetTexID);
+    params::inst().glFuncs->glActiveTexture(GL_TEXTURE1);
+    params::inst().glFuncs->glBindTexture(
+        GL_TEXTURE_3D, params::inst().shadowInfo.offsetTexID);
     model_shader->seti("OffsetTex", 1);
 
     model_shader->setMatrix("matModel", glm::mat4(1.0));
@@ -125,29 +143,32 @@ void Scene::renderObjects(const Transform& trans) {
     }
 
     // Object specific uniforms
-    glActiveTexture(GL_TEXTURE2);
+    params::inst().glFuncs->glActiveTexture(GL_TEXTURE2);
     switch (params::inst().gridRenderMode) {
         case 0:
-            glBindTexture(GL_TEXTURE_2D,
-                          ResourceManager::inst().getTexture("floor")->id());
+            params::inst().glFuncs->glBindTexture(
+                GL_TEXTURE_2D,
+                ResourceManager::inst().getTexture("floor")->id());
             break;
         case 1:
-            glBindTexture(
+            params::inst().glFuncs->glBindTexture(
                 GL_TEXTURE_2D,
                 ResourceManager::inst().getTexture("floor_grey")->id());
             break;
         case 2:
-            glBindTexture(
+            params::inst().glFuncs->glBindTexture(
                 GL_TEXTURE_2D,
                 ResourceManager::inst().getTexture("floor_blue")->id());
             break;
         case 3:
-            glBindTexture(GL_TEXTURE_2D,
-                          ResourceManager::inst().getTexture("default")->id());
+            params::inst().glFuncs->glBindTexture(
+                GL_TEXTURE_2D,
+                ResourceManager::inst().getTexture("default")->id());
             break;
         default:
-            glBindTexture(GL_TEXTURE_2D,
-                          ResourceManager::inst().getTexture("default")->id());
+            params::inst().glFuncs->glBindTexture(
+                GL_TEXTURE_2D,
+                ResourceManager::inst().getTexture("default")->id());
             break;
     }
     model_shader->seti("DiffTex1", 2);
@@ -162,9 +183,9 @@ void Scene::renderObjects(const Transform& trans) {
     m_niceGrid->render(model_shader);
 
     // Model
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D,
-                  ResourceManager::inst().getTexture("default")->id());
+    params::inst().glFuncs->glActiveTexture(GL_TEXTURE2);
+    params::inst().glFuncs->glBindTexture(
+        GL_TEXTURE_2D, ResourceManager::inst().getTexture("default")->id());
     model_shader->seti("DiffTex1", 2);
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -179,9 +200,9 @@ void Scene::renderObjects(const Transform& trans) {
     model_shader->set3f("Material.Ks", glm::vec3(0.7f));
     model_shader->setf("Material.Shininess", 64.0f);
 
-    glDisable(GL_BLEND);
+    params::inst().glFuncs->glDisable(GL_BLEND);
     m_model->render(model_shader);
-    glEnable(GL_BLEND);
+    params::inst().glFuncs->glEnable(GL_BLEND);
 
     model_shader->release();
 }
@@ -191,7 +212,7 @@ void Scene::renderObjectsDepth(const Transform& trans) {
         ResourceManager::inst().getShader("defaultDepth");
     model_shader->bind();
 
-    glCullFace(GL_FRONT);
+    params::inst().glFuncs->glCullFace(GL_FRONT);
 
     // Render nice grid
     model_shader->setMatrix("matViewProjection", trans.matViewProjection);
@@ -206,7 +227,7 @@ void Scene::renderObjectsDepth(const Transform& trans) {
     model_shader->setMatrix("matViewProjection", trans.matViewProjection);
     m_model->render(model_shader);
 
-    glCullFace(GL_BACK);
+    params::inst().glFuncs->glCullFace(GL_BACK);
     model_shader->release();
 }
 

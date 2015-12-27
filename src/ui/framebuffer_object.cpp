@@ -2,59 +2,54 @@
 
 FrameBufferObject::FrameBufferObject(GLuint width, GLuint height)
     : m_width(max<GLuint>(1, width)),
-    m_height(max<GLuint>(1, height)),
-    m_fboID(0),
-    m_nrTexAtt(0),
-    m_nrBufferAtt(0){
-        glGenFramebuffers(1, &m_fboID);
-        m_maxNTexAtt = maxAttachments();
+      m_height(max<GLuint>(1, height)),
+      m_fboID(0),
+      m_nrTexAtt(0),
+      m_nrBufferAtt(0) {
+    params::inst().glFuncs->glGenFramebuffers(1, &m_fboID);
+    m_maxNTexAtt = maxAttachments();
+}
+
+FrameBufferObject::~FrameBufferObject() {
+    // Delete texture attachments
+    for (auto& tex : m_texAtts) {
+        if (tex.second != 0) {
+            params::inst().glFuncs->glDeleteTextures(1, &tex.second);
+        }
     }
 
-FrameBufferObject::~FrameBufferObject()
-{
-    // Delete texture attachments
-    for(auto& tex : m_texAtts) { 
-        if(tex.second != 0) { 
-            glDeleteTextures(1, &tex.second);
-        } 
-    }   
-
     // Delete renderbuffer object attachment
-    for(auto& rbo : m_rboAtts) { 
-        if(rbo.second != 0) { 
-            glDeleteRenderbuffers(1, &rbo.second); 
-        } 
-    }  
+    for (auto& rbo : m_rboAtts) {
+        if (rbo.second != 0) {
+            params::inst().glFuncs->glDeleteRenderbuffers(1, &rbo.second);
+        }
+    }
 
-    glDeleteFramebuffers(1, &m_fboID);  
+    params::inst().glFuncs->glDeleteFramebuffers(1, &m_fboID);
 
 #ifdef FRAMEBUFFER_DEBUG
     cout << "\tFRAMEBUFFER::deleted" << endl;
 #endif
 }
 
-void FrameBufferObject::bind()
-{
+void FrameBufferObject::bind() {
     // Get previous framebuffer id
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &m_prevfboID);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
+    params::inst().glFuncs->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,
+                                          &m_prevfboID);
+    params::inst().glFuncs->glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
 }
 
-void FrameBufferObject::release()
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, 
-                      m_prevfboID);
+void FrameBufferObject::release() {
+    params::inst().glFuncs->glBindFramebuffer(GL_FRAMEBUFFER, m_prevfboID);
 }
 
-void FrameBufferObject::bindDefault(){
-    glBindFramebuffer(GL_FRAMEBUFFER, 
-            QOpenGLContext::currentContext()->defaultFramebufferObject());
+void FrameBufferObject::bindDefault() {
+    params::inst().glFuncs->glBindFramebuffer(
+        GL_FRAMEBUFFER,
+        QOpenGLContext::currentContext()->defaultFramebufferObject());
 }
 
-GLuint FrameBufferObject::id() const
-{
-    return m_fboID;
-}
+GLuint FrameBufferObject::id() const { return m_fboID; }
 
 // Texture Attachment
 // - attachment:
@@ -87,7 +82,7 @@ GLuint FrameBufferObject::id() const
 //      - GL_UNSIGNED_BYTE
 //      - GL_UNSIGNED_INT_24_8
 //      - ...
-// 
+//
 // - minFilter
 //
 // - magFilter
@@ -95,51 +90,46 @@ GLuint FrameBufferObject::id() const
 // - wrapS
 //
 // - wrapT
-void FrameBufferObject::createTexAttachment(GLenum attachment, 
-        GLuint iFormat, 
-        GLuint format, 
-        GLuint type,
-        bool   noColorbuffer,
-        GLint  minFilter,
-        GLint  magFilter,
-        GLint  wrapS,
-        GLint  wrapT)
-{
-    if(m_texAtts.size() >= m_maxNTexAtt) { 
-        cout << "Warning: Cannot create texture attachment for Framebuffer: reached maximum limits." << endl;
-        return;  
-    } 
+void FrameBufferObject::createTexAttachment(GLenum attachment, GLuint iFormat,
+                                            GLuint format, GLuint type,
+                                            bool noColorbuffer, GLint minFilter,
+                                            GLint magFilter, GLint wrapS,
+                                            GLint wrapT) {
+    if (m_texAtts.size() >= m_maxNTexAtt) {
+        cout << "Warning: Cannot create texture attachment for Framebuffer: "
+                "reached maximum limits."
+             << endl;
+        return;
+    }
 
     bind();
 
-        GLuint texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     iFormat,
-                     m_width,
-                     m_height,
-                     0,
-                     format,
-                     type,
-                     NULL);
+    GLuint texture;
+    params::inst().glFuncs->glGenTextures(1, &texture);
+    params::inst().glFuncs->glBindTexture(GL_TEXTURE_2D, texture);
+    params::inst().glFuncs->glTexImage2D(GL_TEXTURE_2D, 0, iFormat, m_width,
+                                         m_height, 0, format, type, NULL);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+    params::inst().glFuncs->glTexParameteri(GL_TEXTURE_2D,
+                                            GL_TEXTURE_MIN_FILTER, minFilter);
+    params::inst().glFuncs->glTexParameteri(GL_TEXTURE_2D,
+                                            GL_TEXTURE_MAG_FILTER, magFilter);
+    params::inst().glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                                            wrapS);
+    params::inst().glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                                            wrapT);
 
-        if(noColorbuffer) { 
-            glDrawBuffer(GL_NONE); 
-            glReadBuffer(GL_NONE); 
-        } 
+    if (noColorbuffer) {
+        params::inst().glFuncs->glDrawBuffer(GL_NONE);
+        params::inst().glFuncs->glReadBuffer(GL_NONE);
+    }
 
-        // Attach texture
-        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture, 0); 
-        m_texAtts[attachment] = texture;
+    // Attach texture
+    params::inst().glFuncs->glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
+                                                   GL_TEXTURE_2D, texture, 0);
+    m_texAtts[attachment] = texture;
 
-        glBindTexture(GL_TEXTURE_2D, 0);
+    params::inst().glFuncs->glBindTexture(GL_TEXTURE_2D, 0);
 
     release();
 }
@@ -152,43 +142,38 @@ void FrameBufferObject::createTexAttachment(GLenum attachment,
 //
 // - bufferFormat:
 //      - e.g., GL_DEPTH24_STENCIL8, GL_RGBA8, GL_DEPTH_COMPONENT, etc.
-void FrameBufferObject::createRenderBufferAttachment(GLenum attachment, 
-        GLenum bufferFormat)
-{
+void FrameBufferObject::createRenderBufferAttachment(GLenum attachment,
+                                                     GLenum bufferFormat) {
     bind();
 
-        GLuint rbo;
-        glGenRenderbuffers(1, &rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    GLuint rbo;
+    params::inst().glFuncs->glGenRenderbuffers(1, &rbo);
+    params::inst().glFuncs->glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 
-        glRenderbufferStorage(GL_RENDERBUFFER, 
-                bufferFormat, 
-                m_width, 
-                m_height);
+    params::inst().glFuncs->glRenderbufferStorage(GL_RENDERBUFFER, bufferFormat,
+                                                  m_width, m_height);
 
-        // Attach rbo
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-                attachment,
-                GL_RENDERBUFFER,
-                rbo);
-        m_rboAtts[attachment] = rbo;
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    // Attach rbo
+    params::inst().glFuncs->glFramebufferRenderbuffer(
+        GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, rbo);
+    m_rboAtts[attachment] = rbo;
+    params::inst().glFuncs->glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     release();
 }
 
-bool FrameBufferObject::checkStatus()
-{
+bool FrameBufferObject::checkStatus() {
     bind();
 
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    GLenum status =
+        params::inst().glFuncs->glCheckFramebufferStatus(GL_FRAMEBUFFER);
     GLboolean result = false;
 
-    switch(status)
-    {
+    switch (status) {
         case GL_FRAMEBUFFER_COMPLETE:
             std::cout << "\tFRAMEBUFFER::Complete" << std::endl;
-            std::cout << "\tFRAMEBUFFER::Size: " << m_width << "x" << m_height << std::endl;
+            std::cout << "\tFRAMEBUFFER::Size: " << m_width << "x" << m_height
+                      << std::endl;
             result = true;
             break;
         case GL_FRAMEBUFFER_UNDEFINED:
@@ -196,19 +181,25 @@ bool FrameBufferObject::checkStatus()
             result = false;
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-            std::cout << "[ERROR]FRAMEBUFFER::incomplete: Attachment is NOT complete" << std::endl;
+            std::cout
+                << "[ERROR]FRAMEBUFFER::incomplete: Attachment is NOT complete"
+                << std::endl;
             result = false;
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-            std::cout << "[ERROR]FRAMEBUFFER::incomplete: No image is attached to FBO" << std::endl;
+            std::cout
+                << "[ERROR]FRAMEBUFFER::incomplete: No image is attached to FBO"
+                << std::endl;
             result = false;
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-            std::cout << "[ERROR]FRAMEBUFFER::incomplete: Draw buffer" << std::endl;
+            std::cout << "[ERROR]FRAMEBUFFER::incomplete: Draw buffer"
+                      << std::endl;
             result = false;
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-            std::cout << "[ERROR]FRAMEBUFFER::incomplete: Read buffer" << std::endl;
+            std::cout << "[ERROR]FRAMEBUFFER::incomplete: Read buffer"
+                      << std::endl;
             result = false;
             break;
         case GL_FRAMEBUFFER_UNSUPPORTED:
@@ -216,11 +207,13 @@ bool FrameBufferObject::checkStatus()
             result = false;
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-            std::cout << "[ERROR]FRAMEBUFFER::incomplete: multisample" << std::endl;
+            std::cout << "[ERROR]FRAMEBUFFER::incomplete: multisample"
+                      << std::endl;
             result = false;
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-            std::cout << "[ERROR]FRAMEBUFFER::incomplete: layer targets" << std::endl;
+            std::cout << "[ERROR]FRAMEBUFFER::incomplete: layer targets"
+                      << std::endl;
             result = false;
             break;
         default:
@@ -234,136 +227,134 @@ bool FrameBufferObject::checkStatus()
     return result;
 }
 
-GLuint FrameBufferObject::maxAttachments()
-{
+GLuint FrameBufferObject::maxAttachments() {
     GLint maxAtt = 0;
 
-    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAtt);
+    params::inst().glFuncs->glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAtt);
 
     return maxAtt;
 }
 
 // Handy Helper Functions
-void FrameBufferObject::createColorTexture(GLenum attachment){
-    createTexAttachment(attachment,
-                        GL_RGBA32F,
-                        GL_RGBA,
-                        GL_FLOAT,
-                        false);
+void FrameBufferObject::createColorTexture(GLenum attachment) {
+    createTexAttachment(attachment, GL_RGBA32F, GL_RGBA, GL_FLOAT, false);
 }
 
-void FrameBufferObject::createDepthTexture(){
-    createTexAttachment(GL_DEPTH_ATTACHMENT,
-                        GL_DEPTH_COMPONENT,
-                        GL_DEPTH_COMPONENT,
-                        GL_FLOAT,
-                        true);
-    glBindTexture(GL_TEXTURE_2D, m_texAtts[GL_DEPTH_ATTACHMENT]);
-    
-        // Clamp to border
-        GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+void FrameBufferObject::createDepthTexture() {
+    createTexAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT,
+                        GL_DEPTH_COMPONENT, GL_FLOAT, true);
+    params::inst().glFuncs->glBindTexture(GL_TEXTURE_2D,
+                                          m_texAtts[GL_DEPTH_ATTACHMENT]);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // Clamp to border
+    GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    params::inst().glFuncs->glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void FrameBufferObject::createStencilDepthTexture(){
-    createTexAttachment(GL_DEPTH_STENCIL_ATTACHMENT,
-                        GL_DEPTH24_STENCIL8,
-                        GL_DEPTH_STENCIL,
-                        GL_UNSIGNED_INT_24_8,
-                        true);
+void FrameBufferObject::createStencilDepthTexture() {
+    createTexAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8,
+                        GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, true);
 }
 
-void FrameBufferObject::createStencilRenderbuffer(){
-    createRenderBufferAttachment(GL_STENCIL_ATTACHMENT,
-                                 GL_STENCIL_INDEX16);
+void FrameBufferObject::createStencilRenderbuffer() {
+    createRenderBufferAttachment(GL_STENCIL_ATTACHMENT, GL_STENCIL_INDEX16);
 }
 
-void FrameBufferObject::createStencilDepthRenderbuffer(){
+void FrameBufferObject::createStencilDepthRenderbuffer() {
     createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT,
                                  GL_DEPTH24_STENCIL8);
 }
 
-void FrameBufferObject::switchToTexAttachment(GLuint texID, GLenum attachment)
-{
+void FrameBufferObject::switchToTexAttachment(GLuint texID, GLenum attachment) {
     bind();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, 
-                               attachment, 
-                               GL_TEXTURE_2D, 
-                               texID, 
-                               0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texID, 0);
     release();
 }
 
-GLuint FrameBufferObject::texAttachment(GLenum attachment) const
-{
+GLuint FrameBufferObject::texAttachment(GLenum attachment) const {
     map<GLenum, GLuint>::const_iterator iter = m_texAtts.find(attachment);
 
     GLuint id = 0;
-    if(iter != m_texAtts.end())
-        id = iter->second;
+    if (iter != m_texAtts.end()) id = iter->second;
 
     return id;
 }
 
-GLuint FrameBufferObject::rboAttachment(GLenum attachment) const
-{
+GLuint FrameBufferObject::rboAttachment(GLenum attachment) const {
     map<GLenum, GLuint>::const_iterator iter = m_rboAtts.find(attachment);
 
     GLuint id = 0;
-    if(iter != m_rboAtts.end())
-        id = iter->second;
+    if (iter != m_rboAtts.end()) id = iter->second;
 
     return id;
 }
 
-void FrameBufferObject::info()
-{
-    GLint maxAtt = 0;   
-    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAtt);
+void FrameBufferObject::info() {
+    GLint maxAtt = 0;
+    params::inst().glFuncs->glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAtt);
 
     GLint maxRenderbufferSize;
-    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxRenderbufferSize);
+    params::inst().glFuncs->glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE,
+                                          &maxRenderbufferSize);
 
     GLint attObjectType_0 = 0;
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &attObjectType_0);
+    params::inst().glFuncs->glGetFramebufferAttachmentParameteriv(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &attObjectType_0);
 
     GLint attObjectName_0 = 0;
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &attObjectName_0);
+    params::inst().glFuncs->glGetFramebufferAttachmentParameteriv(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &attObjectName_0);
 
     GLint attRedSize_0 = 0;
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &attRedSize_0);
+    params::inst().glFuncs->glGetFramebufferAttachmentParameteriv(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &attRedSize_0);
 
     GLint attGreenSize_0 = 0;
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &attGreenSize_0);
+    params::inst().glFuncs->glGetFramebufferAttachmentParameteriv(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &attGreenSize_0);
 
     GLint attBlueSize_0 = 0;
-    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &attBlueSize_0);
+    params::inst().glFuncs->glGetFramebufferAttachmentParameteriv(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &attBlueSize_0);
 
     GLint rbWidth = 0;
-    glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &rbWidth); //?? RB not bound
+    params::inst().glFuncs->glGetRenderbufferParameteriv(
+        GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH,
+        &rbWidth);  //?? RB not bound
 
     GLint rbHeight = 0;
-    glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &rbHeight); //??
+    params::inst().glFuncs->glGetRenderbufferParameteriv(GL_RENDERBUFFER,
+                                                         GL_RENDERBUFFER_HEIGHT,
+                                                         &rbHeight);  //??
 
     std::cout << "\tFRAMEBUFFER::MaxAttachments: " << maxAtt << std::endl;
-    std::cout << "\tFRAMEBUFFER::MaxRenderbufferSize: " << maxRenderbufferSize << std::endl;
-    std::cout << "\tFRAMEBUFFER::AttachmentObjectType[0]: " << attObjectType_0 << std::endl;
-    std::cout << "\tFRAMEBUFFER::AttachmentObjectName[0]: " << attObjectName_0 << std::endl;
-    std::cout << "\tFRAMEBUFFER::AttachmentBlueSize[0]: " << attRedSize_0 << std::endl;
-    std::cout << "\tFRAMEBUFFER::AttachmentGreenSize[0]: " << attGreenSize_0 << std::endl;
-    std::cout << "\tFRAMEBUFFER::AttachmentBlueSize[0]: " << attBlueSize_0 << std::endl;
+    std::cout << "\tFRAMEBUFFER::MaxRenderbufferSize: " << maxRenderbufferSize
+              << std::endl;
+    std::cout << "\tFRAMEBUFFER::AttachmentObjectType[0]: " << attObjectType_0
+              << std::endl;
+    std::cout << "\tFRAMEBUFFER::AttachmentObjectName[0]: " << attObjectName_0
+              << std::endl;
+    std::cout << "\tFRAMEBUFFER::AttachmentBlueSize[0]: " << attRedSize_0
+              << std::endl;
+    std::cout << "\tFRAMEBUFFER::AttachmentGreenSize[0]: " << attGreenSize_0
+              << std::endl;
+    std::cout << "\tFRAMEBUFFER::AttachmentBlueSize[0]: " << attBlueSize_0
+              << std::endl;
     std::cout << "\tFRAMEBUFFER::RenderbufferWidth: " << rbWidth << std::endl;
     std::cout << "\tFRAMEBUFFER::RenderbufferHeight: " << rbHeight << std::endl;
 }
 
-std::string FrameBufferObject::lookupAttachment(GLenum att)
-{
+std::string FrameBufferObject::lookupAttachment(GLenum att) {
     std::string text;
 
-    switch(att)
-    {
+    switch (att) {
         case GL_COLOR_ATTACHMENT0:
             text = "GL_COLOR_ATTACHMENT0";
             break;

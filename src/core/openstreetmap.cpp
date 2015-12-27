@@ -285,9 +285,9 @@ void OpenStreetMap::render(unique_ptr<Shader>& shader) {
     shader->setMatrix("matModel", model);
 
     // Render Points
-    glPointSize(10.0f);
+    params::inst().glFuncs->glPointSize(10.0f);
     m_vboPoints->render();
-    glPointSize(1.0f);
+    params::inst().glFuncs->glPointSize(1.0f);
 
     // Render Lines
     m_vboLines->render();

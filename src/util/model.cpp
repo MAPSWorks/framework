@@ -67,10 +67,10 @@ unique_ptr<Mesh> Model::processMesh(aiMesh* mesh, const aiScene* scene){
             glm::vec2 tvec; 
             tvec.x = mesh->mTextureCoords[0][i].x;
             tvec.y = mesh->mTextureCoords[0][i].y;
-            vertex.TexCoords = tvec;
+            vertex.TexCoords = glm::vec4(tvec, 0.0f, 0.0f);
         } 
         else{
-            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+            vertex.TexCoords = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
         }
         vertices.push_back(vertex);
     } 
@@ -118,7 +118,7 @@ vector<Mesh::Texture> Model::loadMaterialTextures(aiMaterial* mat,
         if(!skip) { 
             string filename;
             filename = m_directory + '/' + string(str.C_Str());
-            unique_ptr<Texture>& new_texture = ResourceManager::inst().loadTexture(filename.c_str(), GL_REPEAT, str.C_Str());
+            unique_ptr<Texture>& new_texture = ResourceManager::inst().loadTexture(filename.c_str(), str.C_Str());
             Mesh::Texture texture;
             texture.id = new_texture->id();
             texture.type = typeName;

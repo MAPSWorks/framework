@@ -10,31 +10,31 @@ RenderableObject::RenderableObject()
   m_primitiveMode(GL_POINTS),
   m_usage(GL_STATIC_DRAW)
 {
-    glGenVertexArrays(1, &m_vao);
-    glGenBuffers(1, &m_vbo);
-    glGenBuffers(1, &m_ebo);
+    params::inst().glFuncs->glGenVertexArrays(1, &m_vao);
+    params::inst().glFuncs->glGenBuffers(1, &m_vbo);
+    params::inst().glFuncs->glGenBuffers(1, &m_ebo);
 }
 
 RenderableObject::~RenderableObject()
 {
     if(m_vao != GL_INVALID_VALUE)
-        glDeleteVertexArrays(1, &m_vao);
+        params::inst().glFuncs->glDeleteVertexArrays(1, &m_vao);
 
     if(m_vbo != GL_INVALID_VALUE)
-        glDeleteBuffers(1, &m_vbo);
+        params::inst().glFuncs->glDeleteBuffers(1, &m_vbo);
 
     if(m_ebo != GL_INVALID_VALUE)
-        glDeleteBuffers(1, &m_ebo);
+        params::inst().glFuncs->glDeleteBuffers(1, &m_ebo);
 }
 
 void RenderableObject::bind()
 {
-    glBindVertexArray(m_vao);
+    params::inst().glFuncs->glBindVertexArray(m_vao);
 }
 
 void RenderableObject::release()
 {
-    glBindVertexArray(0);
+    params::inst().glFuncs->glBindVertexArray(0);
 }
 
 void RenderableObject::render()
@@ -43,17 +43,17 @@ void RenderableObject::render()
         return; 
     } 
 
-    glBindVertexArray(m_vao);
+    params::inst().glFuncs->glBindVertexArray(m_vao);
     if(!m_useIndexBuffer){
-        glDrawArrays(m_primitiveMode, 0, m_nVertices);
+        params::inst().glFuncs->glDrawArrays(m_primitiveMode, 0, m_nVertices);
     }
     else{
-        glDrawElements(m_primitiveMode, 
+        params::inst().glFuncs->glDrawElements(m_primitiveMode, 
                        m_nVertices,
                        GL_UNSIGNED_INT,
                        0);
     }
-    glBindVertexArray(0);
+    params::inst().glFuncs->glBindVertexArray(0);
 }
 
 /*=====================================================================================
@@ -75,26 +75,26 @@ void RenderableObject::setData(vector<Vertex> data,
 
     this->bind();
     // Bind vertex buffer
-    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+    params::inst().glFuncs->glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, 
+    params::inst().glFuncs->glBufferData(GL_ARRAY_BUFFER, 
                  m_vertices.size() * sizeof(Vertex),
                  &m_vertices[0],
                  m_usage);
 
     // Set the vertex attribute pointers
     // Vertex Position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
+    params::inst().glFuncs->glEnableVertexAttribArray(0);
+    params::inst().glFuncs->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
     // Vertex Normal 
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Normal));
+    params::inst().glFuncs->glEnableVertexAttribArray(1);
+    params::inst().glFuncs->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Normal));
     // Vertex Color
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Color));
+    params::inst().glFuncs->glEnableVertexAttribArray(2);
+    params::inst().glFuncs->glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Color));
     // Vertex Texture Coords
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
+    params::inst().glFuncs->glEnableVertexAttribArray(3);
+    params::inst().glFuncs->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
 
     this->release();
 }
@@ -117,32 +117,32 @@ void RenderableObject::setData(vector<Vertex> data,
 
     this->bind();
     // Bind vertex buffer
-    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+    params::inst().glFuncs->glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, 
+    params::inst().glFuncs->glBufferData(GL_ARRAY_BUFFER, 
                  m_vertices.size() * sizeof(Vertex),
                  &m_vertices[0],
                  m_usage);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+    params::inst().glFuncs->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_ebo);
+    params::inst().glFuncs->glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
                  m_indices.size() * sizeof(GLuint),
                  &m_indices[0],
                  m_usage);
 
     // Set the vertex attribute pointers
     // Vertex Position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
+    params::inst().glFuncs->glEnableVertexAttribArray(0);
+    params::inst().glFuncs->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
     // Vertex Normal 
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Normal));
+    params::inst().glFuncs->glEnableVertexAttribArray(1);
+    params::inst().glFuncs->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Normal));
     // Vertex Color
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Color));
+    params::inst().glFuncs->glEnableVertexAttribArray(2);
+    params::inst().glFuncs->glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, Color));
     // Vertex Texture Coords
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
+    params::inst().glFuncs->glEnableVertexAttribArray(3);
+    params::inst().glFuncs->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
 
     this->release();
 }
@@ -158,7 +158,6 @@ unique_ptr<RenderableObject> RenderableObject::quadLines(int startX,
 
     vector<glm::vec3> vertices;
     vector<glm::vec3> normals;
-    vector<glm::vec3> texCoords;
 
     float d = 0.1;
 
@@ -239,7 +238,7 @@ unique_ptr<RenderableObject> RenderableObject::quad(int startX,
         attrData[i].Position = v;
         attrData[i].Normal = n;
         attrData[i].Color = color;
-        attrData[i].TexCoords = glm::vec2(t.x, t.y);
+        attrData[i].TexCoords = glm::vec4(t.x, t.y, 0.0f, 0.0f);
     }
 
     unique_ptr<RenderableObject> vbo(new RenderableObject);
@@ -293,7 +292,7 @@ unique_ptr<RenderableObject> RenderableObject::quad(int width,
         attrData[i].Position = v;
         attrData[i].Normal = n;
         attrData[i].Color = color;
-        attrData[i].TexCoords = glm::vec2(t.x, t.y);
+        attrData[i].TexCoords = glm::vec4(t.x, t.y, 0.0f, 0.0f);
     }
 
     unique_ptr<RenderableObject> vbo(new RenderableObject);

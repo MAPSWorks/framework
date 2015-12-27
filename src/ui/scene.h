@@ -5,6 +5,7 @@
 #include "light.h"
 #include "trajectories.h"
 #include "openstreetmap.h"
+#include "video_trajectory.h"
 #include "model.h"
 
 class NiceGrid;
@@ -34,7 +35,8 @@ public:
 public:
     unique_ptr<Light>         m_light;
     unique_ptr<Trajectories>  m_trajectories;
-    unique_ptr<OpenStreetMap> m_osmMap;    
+    unique_ptr<OpenStreetMap> m_osmMap;
+    unique_ptr<VideoTrajectory> m_videoTrajectory;
 
 private:
     unique_ptr<CameraManager>&      m_cameraManager;

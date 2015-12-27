@@ -17,18 +17,24 @@
 #include <QDebug>
 #include <QTimer>
 #include <QColor>
+#include <QMenu>
+#include <QFileDialog>
 #include <QDate>
 #include <QTime>
+#include <QDateTime>
 #include <QDir>
 
-#include <QtOpenGL>
+#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLWidget>
 
 #include <vector>
 #include <map>
 #include <list>
 #include <limits>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -76,10 +82,13 @@ struct GlobalObjectParams {
     int polygonMode = 0;     // 0: normal; 1: wire frame
     int gridRenderMode = 0;  // 0: texture; 1: white color
 
-    float gamma = 2.2f; // Gamma correction
+    float gamma = 2.2f;  // Gamma correction
 
     BoundingBox boundBox;
     ShadowInfo shadowInfo;
+
+    // Global opengl core function pointer
+    QOpenGLFunctions_4_1_Core *glFuncs;
 };
 
 // Singleton Template
@@ -98,6 +107,9 @@ private:
 };
 
 typedef Singleton<GlobalObjectParams> params;
+
+// Split string by delimiter
+vector<string> split(string &str, char delimiter);
 
 void resetBBOX();
 void updateBBOX(float minX, float maxX, float minY, float maxY,

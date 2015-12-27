@@ -41,15 +41,14 @@ public:
 
     // Load texture
     unique_ptr<Texture>& loadTexture(const char *imageName,
-                                     GLint wrapMode,
                                      string name); 
     unique_ptr<Texture>& loadTexture(const char *imageName, 
-                                     GLint wrapMode,
                                      GLint magFilter,
                                      GLint minFilter,
-                                     GLfloat anisotrophy,
-                                     GLboolean createMipmaps,
+                                     GLint wrapMode,
                                      string name); 
+    unique_ptr<Texture>& loadTexture(const vector<string>& imageNames,
+                                     string name);
 
     // Retrieve texture
     unique_ptr<Texture>& getTexture(string name);

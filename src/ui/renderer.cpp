@@ -39,18 +39,18 @@ void Renderer::render(Transform &trans)
 
 void Renderer::renderScene(const Transform &trans)
 {
-    glClearColor(m_bgColor.x, m_bgColor.y, m_bgColor.z, m_bgColor.w);    
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     
+    params::inst().glFuncs->glClearColor(m_bgColor.x, m_bgColor.y, m_bgColor.z, m_bgColor.w);    
+    params::inst().glFuncs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);     
 
     if (params::inst().polygonMode == 2)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        params::inst().glFuncs->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        params::inst().glFuncs->glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     m_scene->renderObjects(trans);
     m_scene->renderWorld(trans);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    params::inst().glFuncs->glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Renderer::resize(int width, int height)

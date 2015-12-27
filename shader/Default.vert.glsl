@@ -26,7 +26,7 @@
 layout(location = VERT_POSITION) in vec3 VertexPosition;
 layout(location = VERT_NORMAL)   in vec3 VertexNormal;
 layout(location = VERT_COLOR)    in vec4 VertexColor;
-layout(location = VERT_TEXTURE)  in vec2 VertexTexture;
+layout(location = VERT_TEXTURE)  in vec4 VertexTexture;
 
 out vec2 TexCoords;
 out vec4 VertColor;
@@ -36,7 +36,7 @@ uniform mat4 matViewProjection;
 
 void main()
 {	   
-    TexCoords   = VertexTexture;
+    TexCoords   = VertexTexture.xy;
 	VertColor   = VertexColor;
     gl_Position = matViewProjection * matModel * vec4(VertexPosition, 1.0);
 }

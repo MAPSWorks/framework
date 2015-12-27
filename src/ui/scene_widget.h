@@ -36,6 +36,7 @@ public slots:
     void slotLoadTrajectories(void);
     void slotSaveTrajectories(void);
     void slotLoadOpenStreetMap(void);
+    void slotLoadVideoTrajectory(void);
     void slotExtractTrajectories(void);
     void slotClear(void);
 

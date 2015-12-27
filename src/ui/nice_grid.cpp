@@ -49,28 +49,28 @@ void NiceGrid::createVBO()
     // first triangle
     data[0].Position  = glm::vec3(-m_size, 0.0f, -m_size);
     data[0].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[0].TexCoords = glm::vec2(-m_rep, m_rep);
+    data[0].TexCoords = glm::vec4(-m_rep, m_rep, 0.0f, 0.0f);
 
     data[1].Position  = glm::vec3(-m_size, 0.0f, m_size);
     data[1].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[1].TexCoords = glm::vec2(-m_rep, -m_rep);
+    data[1].TexCoords = glm::vec4(-m_rep, -m_rep, 0.0f, 0.0f);
 
     data[2].Position  = glm::vec3(m_size, 0.0f, m_size);
     data[2].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[2].TexCoords = glm::vec2(m_rep, -m_rep);
+    data[2].TexCoords = glm::vec4(m_rep, -m_rep, 0.0f, 0.0f);
 
     // Second triangle
     data[3].Position  = glm::vec3(m_size, 0.0f, m_size);
     data[3].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[3].TexCoords = glm::vec2(m_rep, -m_rep);
+    data[3].TexCoords = glm::vec4(m_rep, -m_rep, 0.0f, 0.0f);
 
     data[4].Position  = glm::vec3(m_size, 0.0f, -m_size);
     data[4].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[4].TexCoords = glm::vec2(m_rep, m_rep);
+    data[4].TexCoords = glm::vec4(m_rep, m_rep, 0.0f, 0.0f);
 
     data[5].Position  = glm::vec3(-m_size, 0.0f, -m_size);
     data[5].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[5].TexCoords = glm::vec2(-m_rep, m_rep);
+    data[5].TexCoords = glm::vec4(-m_rep, m_rep, 0.0f, 0.0f);
 
     m_vbo.reset(new RenderableObject());
     m_vbo->setData(data, GL_TRIANGLES);
@@ -92,28 +92,28 @@ void NiceGrid::updateVBO(){
     // first triangle
     data[0].Position  = glm::vec3(-m_size, 0.0f, -m_size);
     data[0].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[0].TexCoords = glm::vec2(-m_rep, m_rep);
+    data[0].TexCoords = glm::vec4(-m_rep, m_rep, 0.0f, 0.0f);
 
     data[1].Position  = glm::vec3(-m_size, 0.0f, m_size);
     data[1].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[1].TexCoords = glm::vec2(-m_rep, -m_rep);
+    data[1].TexCoords = glm::vec4(-m_rep, -m_rep, 0.0f, 0.0f);
 
     data[2].Position  = glm::vec3(m_size, 0.0f, m_size);
     data[2].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[2].TexCoords = glm::vec2(m_rep, -m_rep);
+    data[2].TexCoords = glm::vec4(m_rep, -m_rep, 0.0f, 0.0f);
 
     // Second triangle
     data[3].Position  = glm::vec3(m_size, 0.0f, m_size);
     data[3].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[3].TexCoords = glm::vec2(m_rep, -m_rep);
+    data[3].TexCoords = glm::vec4(m_rep, -m_rep, 0.0f, 0.0f);
 
     data[4].Position  = glm::vec3(m_size, 0.0f, -m_size);
     data[4].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[4].TexCoords = glm::vec2(m_rep, m_rep);
+    data[4].TexCoords = glm::vec4(m_rep, m_rep, 0.0f, 0.0f);
 
     data[5].Position  = glm::vec3(-m_size, 0.0f, -m_size);
     data[5].Normal    = glm::vec3(0.0f, 1.0f, 0.0f);
-    data[5].TexCoords = glm::vec2(-m_rep, m_rep);
+    data[5].TexCoords = glm::vec4(-m_rep, m_rep, 0.0f, 0.0f);
 
     m_vbo->setData(data, GL_TRIANGLES); 
 }

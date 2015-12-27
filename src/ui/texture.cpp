@@ -1,338 +1,179 @@
 #include "texture.h"
 
-//Default
-Texture::Texture()
-: m_id(0),
-  m_width(0),
-  m_height(0),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(GL_RGBA),
-  m_format(GL_RGBA),
-  m_border(0),
-  m_type(GL_UNSIGNED_BYTE),
-  m_data(NULL),
-  m_minFilter(GL_NEAREST),
-  m_magFilter(GL_NEAREST),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(GL_FALSE),
-  m_maxAnisotropy(1.0f)
-{
-
-}
-
-//Create empty texture
-Texture::Texture(GLsizei w, GLsizei h, GLint iFormat, GLint format, GLint type)
-: m_id(0),
-  m_width(w),
-  m_height(h),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(iFormat),
-  m_format(format),
-  m_border(0),
-  m_type(type),
-  m_data(NULL),
-  m_minFilter(GL_NEAREST),
-  m_magFilter(GL_NEAREST),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(GL_FALSE),
-  m_maxAnisotropy(1.0f)
-{
-    create();
-}
-
-//Pass with Data Pointer
-Texture::Texture(GLsizei w, GLsizei h, GLint iFormat, GLint format, GLint type, GLvoid *data)
-: m_id(0),
-  m_width(w),
-  m_height(h),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(iFormat),
-  m_format(format),
-  m_border(0),
-  m_type(type),
-  m_data(data),
-  m_minFilter(GL_NEAREST),
-  m_magFilter(GL_NEAREST),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(GL_TRUE),
-  m_maxAnisotropy(0.0f)
-{
-    create();
-}
-
-//Load from QImage
-Texture::Texture(const QImage &img)
-: m_id(0),
-  m_width(0),
-  m_height(0),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(GL_RGBA),
-  m_format(GL_BGRA),
-  m_border(0),
-  m_type(GL_UNSIGNED_BYTE),
-  m_data(NULL),
-  m_minFilter(GL_LINEAR_MIPMAP_LINEAR),
-  m_magFilter(GL_LINEAR),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(GL_TRUE),
-  m_maxAnisotropy(16.0f)
-{
-    QImage swapped_img = img.convertToFormat(QImage::Format_RGBA8888);
-    m_data = (GLvoid*)swapped_img.bits();
-    m_width = (GLuint)swapped_img.width();
-    m_height = (GLuint)swapped_img.height();
-
-    create();
-}
-
-Texture::Texture(const QImage &img, GLint magFilter, GLint minFilter, GLfloat anisotrophy, GLboolean createMipmaps)
-: m_id(0),
-  m_width(0),
-  m_height(0),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(GL_RGBA),
-  m_format(GL_BGRA),
-  m_border(0),
-  m_type(GL_UNSIGNED_BYTE),
-  m_data(NULL),
-  m_minFilter(minFilter),
-  m_magFilter(magFilter),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(createMipmaps),
-  m_maxAnisotropy(anisotrophy)
-{
-    QImage swapped_img = img.convertToFormat(QImage::Format_RGBA8888);
-    m_data = (GLvoid*)swapped_img.bits();
-    m_width = (GLuint)swapped_img.width();
-    m_height = (GLuint)swapped_img.height();
-
-    create();
-}
-
 Texture::Texture(const char* imageName)
-: m_id(0),
-  m_width(0),
-  m_height(0),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(GL_RGBA),
-  m_format(GL_RGBA),
-  m_border(0),
-  m_type(GL_UNSIGNED_BYTE),
-  m_data(NULL),
-  m_minFilter(GL_LINEAR_MIPMAP_LINEAR),
-  m_magFilter(GL_LINEAR),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(GL_TRUE),
-  m_maxAnisotropy(16.0f) 
-{
+    : m_target(GL_TEXTURE_2D),
+      m_internalFormat(GL_RGBA8),
+      m_format(GL_RGBA),
+      m_type(GL_UNSIGNED_BYTE),
+      m_minFilter(GL_LINEAR_MIPMAP_LINEAR),
+      m_magFilter(GL_LINEAR),
+      m_wrap(GL_REPEAT) {
     QImage img = QImage(imageName).convertToFormat(QImage::Format_RGBA8888);
-    if (img.isNull()) { 
+
+    if (img.isNull()) {
         cout << "ERROR::TEXTURE::Texture() not found " << imageName << endl;
         return;
-    } 
+    }
 
     m_data = (GLvoid*)img.bits();
     m_width = (GLuint)img.width();
-    m_height = (GLuint)img.height();  
-
-    if (m_createMipMaps) { 
-        m_minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    } 
-    else{
-        m_minFilter = GL_LINEAR;
-    }
-
+    m_height = (GLuint)img.height();
     create();
 }
-        
-Texture::Texture(const char* imageName, 
-                 GLint wrapMode,
-                 GLint magFilter, 
-                 GLint minFilter, 
-                 GLfloat anisotrophy, 
-                 GLboolean createMipmaps)
-: m_id(0),
-  m_width(0),
-  m_height(0),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(GL_RGBA),
-  m_format(GL_RGBA),
-  m_border(0),
-  m_type(GL_UNSIGNED_BYTE),
-  m_data(NULL),
-  m_minFilter(minFilter),
-  m_magFilter(magFilter),
-  m_wrap(wrapMode),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(createMipmaps),
-  m_maxAnisotropy(anisotrophy)
-{
 
-}
+Texture::Texture(const char* imageName, GLint magFilter, GLint minFilter,
+                 GLint wrapMode)
+    : m_target(GL_TEXTURE_2D),
+      m_internalFormat(GL_RGBA8),
+      m_format(GL_BGRA),
+      m_type(GL_UNSIGNED_BYTE),
+      m_minFilter(minFilter),
+      m_magFilter(magFilter),
+      m_wrap(wrapMode) {
+    QImage img = QImage(imageName).convertToFormat(QImage::Format_RGBA8888);
 
-Texture::Texture(QString path)
-: m_id(0),
-  m_width(0),
-  m_height(0),
-  m_target(GL_TEXTURE_2D),
-  m_mipLevel(0),
-  m_internalFormat(GL_RGBA),
-  m_format(GL_RGBA),
-  m_border(0),
-  m_type(GL_UNSIGNED_BYTE),
-  m_data(NULL),
-  m_minFilter(GL_LINEAR_MIPMAP_LINEAR),
-  m_magFilter(GL_LINEAR),
-  m_wrap(GL_CLAMP),
-  m_envMode(GL_REPLACE),
-  m_createMipMaps(GL_TRUE),
-  m_maxAnisotropy(16.0f)
-{
-    if (!QFileInfo::exists(path)) { 
-        std::cout << "ERROR::TEXTURE::Texture() not found " << path.toStdString() << std::endl;
+    if (img.isNull()) {
+        cout << "ERROR::TEXTURE::Texture() not found " << imageName << endl;
         return;
-    } 
-
-    QImage img = QImage(path).convertToFormat(QImage::Format_RGBA8888);
+    }
 
     m_data = (GLvoid*)img.bits();
     m_width = (GLuint)img.width();
-    m_height = (GLuint)img.height();  
+    m_height = (GLuint)img.height();
+    create();
+}
 
-    if (m_createMipMaps) { 
-        m_minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    } 
-    else{
-        m_minFilter = GL_LINEAR;
+Texture::Texture(const vector<string>& imageNames)
+    : m_target(GL_TEXTURE_2D_ARRAY),
+      m_internalFormat(GL_RGBA8),
+      m_format(GL_RGBA),
+      m_type(GL_UNSIGNED_BYTE),
+      m_minFilter(GL_LINEAR_MIPMAP_LINEAR),
+      m_magFilter(GL_LINEAR),
+      m_wrap(GL_REPEAT) {
+
+    bool isFirstImage = true;
+    for (size_t i = 0; i < imageNames.size(); ++i) {
+        QImage img = QImage(imageNames[i].c_str())
+                         .convertToFormat(QImage::Format_RGBA8888);
+        if (img.isNull()) {
+            cout << "ERROR: Cannot load image: " << imageNames[i] << endl;
+            return;
+        }
+        if (isFirstImage) {
+            m_width = (GLuint)img.width();
+            m_height = (GLuint)img.height();
+            isFirstImage = false;
+        } else {
+            // Check frame images. They should have same size.
+            if (m_width != (GLuint)img.width() ||
+                m_height != (GLuint)img.height()) {
+                cout << "ERROR from Texture: images are not in the same size!"
+                     << endl;
+                return;
+            }
+        }
+        m_frameImages.push_back(img);
     }
+    m_depth = m_frameImages.size();
+    cout << "3D texture loade. There are " << m_frameImages.size() << " images."
+         << endl;
 
     create();
 }
 
-Texture::~Texture()
-{
-    deleteTex();
-}
-
-void Texture::create()
-{
-
-    glGenTextures(1, &m_id);	
-    glBindTexture(m_target, m_id);    
-
-    if(m_createMipMaps)
-    {           
-        glTexImage2D(m_target, m_mipLevel, m_internalFormat, m_width, m_height, m_border, m_format, m_type, m_data);     
-        glGenerateMipmap(m_target);
+Texture::~Texture() {
+    if (m_id != 0) {
+        params::inst().glFuncs->glDeleteTextures(1, &m_id);
     }
-    else
-    {
-        glTexImage2D(m_target, 0, m_internalFormat, m_width, m_height, m_border, m_format, m_type, m_data);     
+}
+
+void Texture::create() {
+    params::inst().glFuncs->glGenTextures(1, &m_id);
+    params::inst().glFuncs->glBindTexture(m_target, m_id);
+
+    switch (m_target) {
+        case GL_TEXTURE_2D:
+            params::inst().glFuncs->glTexImage2D(
+                GL_TEXTURE_2D, 0, m_internalFormat, m_width, m_height, 0,
+                m_format, m_type, m_data);
+            params::inst().glFuncs->glGenerateMipmap(
+                GL_TEXTURE_2D);  // Generate mipmaps now
+            params::inst().glFuncs->glTexParameteri(
+                GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_minFilter);
+            params::inst().glFuncs->glTexParameteri(
+                GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_magFilter);
+            params::inst().glFuncs->glTexParameterf(GL_TEXTURE_2D,
+                                                    GL_TEXTURE_WRAP_S, m_wrap);
+            params::inst().glFuncs->glTexParameterf(GL_TEXTURE_2D,
+                                                    GL_TEXTURE_WRAP_T, m_wrap);
+            break;
+        case GL_TEXTURE_2D_ARRAY:
+            // Create storage for 3D texture
+            params::inst().glFuncs->glTexImage3D(
+                GL_TEXTURE_2D_ARRAY, 0, m_internalFormat, m_width, m_height,
+                m_depth, 0, m_format, m_type, NULL);
+            // Setup data
+            for (size_t i = 0; i < m_frameImages.size(); ++i) {
+                m_data = (GLvoid*)m_frameImages[i].bits();
+                params::inst().glFuncs->glTexSubImage3D(
+                    GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, m_width, m_height, 1,
+                    m_format, m_type, m_data);
+            }
+            params::inst().glFuncs->glGenerateMipmap(
+                GL_TEXTURE_2D_ARRAY);  // Generate mipmaps now
+            params::inst().glFuncs->glTexParameteri(
+                GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, m_minFilter);
+            params::inst().glFuncs->glTexParameteri(
+                GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, m_magFilter);
+            params::inst().glFuncs->glTexParameterf(GL_TEXTURE_2D_ARRAY,
+                                                    GL_TEXTURE_WRAP_S, m_wrap);
+            params::inst().glFuncs->glTexParameterf(GL_TEXTURE_2D_ARRAY,
+                                                    GL_TEXTURE_WRAP_T, m_wrap);
+            params::inst().glFuncs->glTexParameterf(GL_TEXTURE_2D_ARRAY,
+                                                    GL_TEXTURE_WRAP_R, m_wrap);
+            m_frameImages.clear();
+            break;
+        default:
+            break;
     }
-
-    glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
-    glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, m_magFilter); 
-
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, m_envMode);
-
-    glTexParameterf(m_target, GL_TEXTURE_WRAP_S, m_wrap);
-    glTexParameterf(m_target, GL_TEXTURE_WRAP_T, m_wrap);
-    glTexParameterf(m_target, GL_TEXTURE_WRAP_R, m_wrap);
-
-    glTexParameterf(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy);
-
 }
 
-void Texture::bind()
-{
-    glBindTexture(m_target, m_id);
-}
+void Texture::bind() { params::inst().glFuncs->glBindTexture(m_target, m_id); }
 
-void Texture::release()
-{
-    glBindTexture(m_target, 0);
-}
+void Texture::release() { params::inst().glFuncs->glBindTexture(m_target, 0); }
 
-void Texture::deleteTex()
-{
-	if (m_id != 0)
-	{
-		glDeleteTextures(1, &m_id);	
-	}
-}
+GLuint Texture::id() const { return m_id; }
 
-GLuint Texture::id() const
-{
-    return m_id;
-}
-
-void Texture::setWrapMode(GLint wrap)
-{
+void Texture::setWrapMode(GLint wrap) {
     m_wrap = wrap;
 
     bind();
 
-    glTexParameterf(m_target, GL_TEXTURE_WRAP_S, m_wrap);
-    glTexParameterf(m_target, GL_TEXTURE_WRAP_T, m_wrap);
-    glTexParameterf(m_target, GL_TEXTURE_WRAP_R, m_wrap);
+    params::inst().glFuncs->glTexParameterf(m_target, GL_TEXTURE_WRAP_S,
+                                            m_wrap);
+    params::inst().glFuncs->glTexParameterf(m_target, GL_TEXTURE_WRAP_T,
+                                            m_wrap);
+    params::inst().glFuncs->glTexParameterf(m_target, GL_TEXTURE_WRAP_R,
+                                            m_wrap);
 
     release();
 }
 
-void Texture::setEnvMode(GLint envMode)
-{
-    m_envMode = envMode;
-
-    bind();
-
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, m_envMode);
-
-    release();
-}
-
-void Texture::setFilter(GLint minFilter, GLint magFilter)
-{
+void Texture::setFilter(GLint minFilter, GLint magFilter) {
     m_minFilter = minFilter;
-    m_magFilter = magFilter; 
+    m_magFilter = magFilter;
 
     bind();
 
-    glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
-    glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, m_magFilter); 
+    params::inst().glFuncs->glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER,
+                                            m_minFilter);
+    params::inst().glFuncs->glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER,
+                                            m_magFilter);
 
     release();
 }
 
-void Texture::setMaxIsotropy(GLfloat anisotropy)
-{
-    m_maxAnisotropy = anisotropy;
+GLuint Texture::width() const { return m_width; }
 
-    bind();
-
-    glTexParameterf(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy);  
-
-    release();
-}
-
-GLuint Texture::width() const
-{
-    return m_width;
-}
-
-GLuint Texture::height() const
-{
-    return m_height;
-}
+GLuint Texture::height() const { return m_height; }

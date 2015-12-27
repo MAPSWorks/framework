@@ -8,9 +8,9 @@ int main(int argc, char *argv[])
 
     QSurfaceFormat glFormat;
     glFormat.setSamples(4);
-    glFormat.setVersion( 4, 0 );
-    glFormat.setProfile(QSurfaceFormat::OpenGLContextProfile::CoreProfile);
-    glFormat.setRenderableType(QSurfaceFormat::RenderableType::OpenGL);
+    glFormat.setVersion( 4, 3 );
+    glFormat.setProfile(QSurfaceFormat::CoreProfile);
+    glFormat.setRenderableType(QSurfaceFormat::OpenGL);
     QSurfaceFormat::setDefaultFormat(glFormat);
 
     // MainWindow is a singleton class

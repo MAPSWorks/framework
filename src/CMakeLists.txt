@@ -34,6 +34,7 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
+find_package(Qt5Gui REQUIRED)
     # Set Qt files and resources here
 file(GLOB uis resources/*.ui)
 file(GLOB resources resources/*.qrc)
@@ -78,7 +79,7 @@ target_link_libraries(${exe_name}
                       ${PCL_KDTREE_LIBRARY}
                       ${PCL_SEARCH_LIBRARY}
                       ${OPENGL_LIBRARIES}
-                      Qt5::Core Qt5::Widgets Qt5::OpenGL
+                      Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Gui
                       ${OSMIUM_LIBRARIES}
                       ${PROTOBUF_LIBRARIES}
 )
