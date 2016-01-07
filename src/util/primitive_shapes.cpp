@@ -22,13 +22,13 @@ Line2D::Line2D(vector<glm::vec3>& points, vector<glm::vec4>& colors,
     vv4 = v2 + 0.5f * width * perp;
 
     RenderableObject::Vertex vp1, vp2, vp3, vp4;
-    vp1.Position = glm::vec3(vv1.x, v1.y, vv1.y);
+    vp1.Position = glm::vec3(vv1.x, points[0].y, vv1.y);
     vp1.Color = colors[0];
-    vp2.Position = glm::vec3(vv2.x, v1.y, vv2.y);
+    vp2.Position = glm::vec3(vv2.x, points[0].y, vv2.y);
     vp2.Color = colors[0];
-    vp3.Position = glm::vec3(vv3.x, v2.y, vv3.y);
+    vp3.Position = glm::vec3(vv3.x, points[1].y, vv3.y);
     vp3.Color = colors[1];
-    vp4.Position = glm::vec3(vv4.x, v2.y, vv4.y);
+    vp4.Position = glm::vec3(vv4.x, points[1].y, vv4.y);
     vp4.Color = colors[1];
     m_triangleData.push_back(vp1);
     m_triangleData.push_back(vp2);
@@ -57,14 +57,15 @@ Line2D::Line2D(vector<glm::vec3>& points, glm::vec4 color, float width) {
     vv4 = v2 + 0.5f * width * perp;
 
     RenderableObject::Vertex vp1, vp2, vp3, vp4;
-    vp1.Position = glm::vec3(vv1.x, v1.y, vv1.y);
+    vp1.Position = glm::vec3(vv1.x, points[0].y, vv1.y);
     vp1.Color = color;
-    vp2.Position = glm::vec3(vv2.x, v1.y, vv2.y);
+    vp2.Position = glm::vec3(vv2.x, points[0].y, vv2.y);
     vp2.Color = color;
-    vp3.Position = glm::vec3(vv3.x, v2.y, vv3.y);
+    vp3.Position = glm::vec3(vv3.x, points[1].y, vv3.y);
     vp3.Color = color;
-    vp4.Position = glm::vec3(vv4.x, v2.y, vv4.y);
+    vp4.Position = glm::vec3(vv4.x, points[1].y, vv4.y);
     vp4.Color = color;
+
     m_triangleData.push_back(vp1);
     m_triangleData.push_back(vp2);
     m_triangleData.push_back(vp3);
@@ -72,16 +73,16 @@ Line2D::Line2D(vector<glm::vec3>& points, glm::vec4 color, float width) {
 }
 
 void Line2D::appendTo(vector<RenderableObject::Vertex>& data,
-        vector<GLuint>& indices) {
-    size_t steart_idx = data.size();
-    for(const auto& v : m_triangleData) { 
+                      vector<GLuint>& indices) {
+    size_t start_idx = data.size();
+    for (const auto& v : m_triangleData) {
         data.push_back(v);
-    } 
-    indices.push_back(steart_idx);
-    indices.push_back(steart_idx + 1);
-    indices.push_back(steart_idx + 2);
+    }
+    indices.push_back(start_idx);
+    indices.push_back(start_idx + 2);
+    indices.push_back(start_idx + 1);
 
-    indices.push_back(steart_idx);
-    indices.push_back(steart_idx + 2);
-    indices.push_back(steart_idx + 3);
+    indices.push_back(start_idx);
+    indices.push_back(start_idx + 3);
+    indices.push_back(start_idx + 2);
 }
