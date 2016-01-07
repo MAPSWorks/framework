@@ -103,10 +103,6 @@ void RenderableObject::setData(vector<Vertex> data,
                                vector<GLuint> indices,
                                GLenum primitiveMode,
                                GLenum usage){
-    if(data.size() == 0) { 
-        return; 
-    } 
-
     this->m_vertices = std::move(data);
     this->m_indices  = std::move(indices);
 
