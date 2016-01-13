@@ -17,18 +17,31 @@ etc. to help visualization.
 // 2D line in X-Z plane
 class Line2D {
 public:
-    Line2D(vector<glm::vec3>& points, vector<glm::vec4>& colors,
+    Line2D(const vector<glm::vec3>& points, vector<glm::vec4>& colors,
            float width = 1.0f);
-    Line2D(vector<glm::vec3>& points, glm::vec4 color, float width = 1.0f);
+    Line2D(const vector<glm::vec3>& points, glm::vec4 color,
+           float width = 1.0f);
     virtual ~Line2D() {}
 
-    void appendTo(vector<RenderableObject::Vertex>& data,
-                  vector<GLuint>& indices);
+    void appendTriangles(vector<RenderableObject::Vertex>& data,
+                         vector<GLuint>& indices);
 
 private:
     vector<RenderableObject::Vertex> m_triangleData;
 };
 
 // 2D line stripe in X-Z plane
+class LineStrip2D {
+public:
+    LineStrip2D(const vector<glm::vec3>& points, glm::vec4 color,
+                float width = 1.0f);
+    virtual ~LineStrip2D() {}
+
+    void appendTriangles(vector<RenderableObject::Vertex>& data,
+                         vector<GLuint>& indices);
+
+private:
+    vector<RenderableObject::Vertex> m_triangleData;
+};
 
 #endif /* end of include guard: PRIMITIVE_SHAPES_H_9CWLYH4U */

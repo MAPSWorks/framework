@@ -21,6 +21,9 @@ include_directories(${FLANN_INCLUDE_DIRS})
 find_package(OpenGL REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIR} )
 
+# Eigen3
+include_directories("/usr/local/include/eigen3")
+
 # GLM for OpenGL linear algebra (Already included as pkgs/glm)
 
 # ASSIMP for model loading
