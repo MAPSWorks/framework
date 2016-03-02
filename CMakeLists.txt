@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.2.2)
 project(framework_template)
 set(exe_name framework_template)
 
-set( CMAKE_EXPORT_COMPILE_COMMANDS 1 ) # Used by YouCompleteMe Required to export .json compile file
-
 SET(CMAKE_BUILD_TYPE Release)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
